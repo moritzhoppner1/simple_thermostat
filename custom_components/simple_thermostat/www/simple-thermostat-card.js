@@ -669,7 +669,10 @@ class SimpleThermostatCard extends HTMLElement {
     }
 
     // Find temperature sensor from entity attributes
+    console.log('Entity attributes:', entity.attributes);
     const tempSensorId = entity.attributes.temperature_sensor || `sensor.${baseName}_temperature`;
+    console.log('Temperature sensor from attributes:', entity.attributes.temperature_sensor);
+    console.log('Final tempSensorId:', tempSensorId);
 
     // Create ApexCharts card configuration
     const apexConfig = {
@@ -781,108 +784,89 @@ class SimpleThermostatCard extends HTMLElement {
       });
     }
 
-    // TRV internal temp (try both hauptventil and trv naming)
-    const trvTempSensors = [
-      `sensor.${baseName}_hauptventil_internal_temp`,
-      `sensor.${baseName}_trv_internal_temp`,
-      `sensor.${baseName}_trv_1_internal_temp`
-    ];
-    console.log('Checking TRV temp sensors:', trvTempSensors);
-    for (const sensor of trvTempSensors) {
-      if (this._hass.states[sensor]) {
-        console.log('✓ Found TRV temp sensor:', sensor);
-        series.push({
-          entity: sensor,
-          name: 'TRV Temp',
-          color: '#9C27B0',
-          stroke_width: 2,
-          yaxis_id: 'temp',
-          opacity: 0.7
-        });
-        break;
-      }
-    }
-    if (!trvTempSensors.some(s => this._hass.states[s])) {
+    // TRV internal temp - find all matching sensors
+    const trvTempPattern = new RegExp(`^sensor\\.${baseName.replace('.', '\\.')}_.*_internal_temp$`);
+    const trvTempSensors = Object.keys(this._hass.states).filter(id => trvTempPattern.test(id));
+    console.log('Found TRV temp sensors:', trvTempSensors);
+
+    if (trvTempSensors.length > 0) {
+      // Add the first TRV temp sensor to the chart
+      const sensor = trvTempSensors[0];
+      console.log('✓ Using TRV temp sensor:', sensor);
+      series.push({
+        entity: sensor,
+        name: 'TRV Temp',
+        color: '#9C27B0',
+        stroke_width: 2,
+        yaxis_id: 'temp',
+        opacity: 0.7
+      });
+    } else {
       console.log('✗ No TRV temp sensors found');
     }
 
-    // TRV target temp (try both hauptventil and trv naming)
-    const trvTargetSensors = [
-      `sensor.${baseName}_hauptventil_target_temp`,
-      `sensor.${baseName}_trv_target_temp`,
-      `sensor.${baseName}_trv_1_target_temp`
-    ];
-    console.log('Checking TRV target sensors:', trvTargetSensors);
-    for (const sensor of trvTargetSensors) {
-      if (this._hass.states[sensor]) {
-        console.log('✓ Found TRV target sensor:', sensor);
-        series.push({
-          entity: sensor,
-          name: 'TRV Target',
-          color: '#673AB7',
-          stroke_width: 1,
-          curve: 'stepline',
-          yaxis_id: 'temp',
-          opacity: 0.6
-        });
-        break;
-      }
-    }
-    if (!trvTargetSensors.some(s => this._hass.states[s])) {
+    // TRV target temp - find all matching sensors
+    const trvTargetPattern = new RegExp(`^sensor\\.${baseName.replace('.', '\\.')}_.*_target_temp$`);
+    const trvTargetSensors = Object.keys(this._hass.states).filter(id => trvTargetPattern.test(id));
+    console.log('Found TRV target sensors:', trvTargetSensors);
+
+    if (trvTargetSensors.length > 0) {
+      // Add the first TRV target sensor to the chart
+      const sensor = trvTargetSensors[0];
+      console.log('✓ Using TRV target sensor:', sensor);
+      series.push({
+        entity: sensor,
+        name: 'TRV Target',
+        color: '#673AB7',
+        stroke_width: 1,
+        curve: 'stepline',
+        yaxis_id: 'temp',
+        opacity: 0.6
+      });
+    } else {
       console.log('✗ No TRV target sensors found');
     }
 
-    // Valve position
-    const valveSensors = [
-      `sensor.${baseName}_hauptventil_valve_position`,
-      `sensor.${baseName}_trv_valve_position`,
-      `sensor.${baseName}_trv_1_valve_position`
-    ];
-    console.log('Checking valve sensors:', valveSensors);
-    for (const sensor of valveSensors) {
-      if (this._hass.states[sensor]) {
-        console.log('✓ Found valve sensor:', sensor);
-        series.push({
-          entity: sensor,
-          name: 'Valve',
-          color: '#00BCD4',
-          stroke_width: 2,
-          curve: 'stepline',
-          yaxis_id: 'percent'
-        });
-        break;
-      }
-    }
-    if (!valveSensors.some(s => this._hass.states[s])) {
+    // Valve position - find all matching sensors
+    const valvePattern = new RegExp(`^sensor\\.${baseName.replace('.', '\\.')}_.*_valve_position$`);
+    const valveSensors = Object.keys(this._hass.states).filter(id => valvePattern.test(id));
+    console.log('Found valve sensors:', valveSensors);
+
+    if (valveSensors.length > 0) {
+      // Add the first valve sensor to the chart
+      const sensor = valveSensors[0];
+      console.log('✓ Using valve sensor:', sensor);
+      series.push({
+        entity: sensor,
+        name: 'Valve',
+        color: '#00BCD4',
+        stroke_width: 2,
+        curve: 'stepline',
+        yaxis_id: 'percent'
+      });
+    } else {
       console.log('✗ No valve sensors found');
     }
 
-    // Heating status
-    const heatingSensors = [
-      `binary_sensor.${baseName}_hauptventil_heating`,
-      `binary_sensor.${baseName}_trv_heating`,
-      `binary_sensor.${baseName}_trv_1_heating`
-    ];
-    console.log('Checking heating sensors:', heatingSensors);
-    for (const sensor of heatingSensors) {
-      if (this._hass.states[sensor]) {
-        console.log('✓ Found heating sensor:', sensor);
-        series.push({
-          entity: sensor,
-          name: 'Heating',
-          color: '#F44336',
-          type: 'area',
-          curve: 'stepline',
-          stroke_width: 0,
-          yaxis_id: 'status',
-          opacity: 0.2,
-          transform: "return x === 'on' ? 1 : 0;"
-        });
-        break;
-      }
-    }
-    if (!heatingSensors.some(s => this._hass.states[s])) {
-      console.log('✗ No heating sensors found');
+    // Heating status - use the overall heating sensor
+    const overallHeatingSensor = `binary_sensor.${baseName}_heating`;
+    console.log('Checking overall heating sensor:', overallHeatingSensor);
+
+    if (this._hass.states[overallHeatingSensor]) {
+      console.log('✓ Found overall heating sensor:', overallHeatingSensor);
+      series.push({
+        entity: overallHeatingSensor,
+        name: 'Heating',
+        color: '#F44336',
+        type: 'area',
+        curve: 'stepline',
+        stroke_width: 0,
+        yaxis_id: 'status',
+        opacity: 0.2,
+        transform: "return x === 'on' ? 1 : 0;"
+      });
+    } else {
+      console.log('✗ Overall heating sensor not found');
     }
 
     console.log('Total series added to chart:', series.length);
