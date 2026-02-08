@@ -219,6 +219,10 @@ class SimpleThermostatCard extends HTMLElement {
         background: #757575;
         color: white;
       }
+
+      .chart-section {
+        margin: 16px 0;
+      }
     `;
 
     this.shadowRoot.appendChild(style);
@@ -229,6 +233,7 @@ class SimpleThermostatCard extends HTMLElement {
         <div class="thermostat-section" id="thermostat"></div>
         <div class="preset-buttons" id="presets"></div>
         <div class="status-section" id="status"></div>
+        <div class="chart-section" id="chart"></div>
         <div class="logs-section">
           <div class="logs-header" id="logs-toggle">
             <span><strong>Recent Actions</strong></span>

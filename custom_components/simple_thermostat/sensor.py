@@ -20,6 +20,22 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         async_add_entities(sensor_entities, update_before_add=True)
 
 
+def _get_trv_suffix(climate_entity, trv_index):
+    """Generate TRV suffix for sensor names."""
+    trv_name = climate_entity._trv_names[trv_index] if trv_index < len(climate_entity._trv_names) and climate_entity._trv_names[trv_index] else None
+    num_trvs = len(climate_entity._climate_entities)
+
+    if trv_name:
+        # Use custom name
+        return trv_name.lower().replace(' ', '_')
+    elif num_trvs == 1:
+        # Only one TRV, no suffix
+        return "trv"
+    else:
+        # Multiple TRVs without names, use index
+        return f"trv_{trv_index + 1}"
+
+
 async def async_create_sensors(hass, climate_entity):
     """Create diagnostic sensors for a climate entity."""
     sensors = []
@@ -37,6 +53,7 @@ async def async_create_sensors(hass, climate_entity):
     for idx, climate_id in enumerate(climate_entity._climate_entities):
         sensors.append(SimpleThermostatTRVInternalTempSensor(climate_entity, idx))
         sensors.append(SimpleThermostatTRVTargetTempSensor(climate_entity, idx))
+        sensors.append(SimpleThermostatTRVValvePositionSensor(climate_entity, idx))
         sensors.append(SimpleThermostatTRVHeatingBinarySensor(climate_entity, idx))
 
     return sensors
@@ -114,10 +131,9 @@ class SimpleThermostatTRVInternalTempSensor(SensorEntity):
         """Initialize the sensor."""
         self._climate_entity = climate_entity
         self._trv_index = trv_index
-        climate_id = climate_entity._climate_entities[trv_index]
-        trv_name = climate_id.split('.')[-1].replace('_', ' ').title()
-        self._attr_name = f"{climate_entity.name} TRV {trv_index + 1} Internal Temp"
-        self._attr_unique_id = f"{climate_entity.unique_id}_trv_{trv_index}_internal_temp"
+        trv_suffix = _get_trv_suffix(climate_entity, trv_index)
+        self._attr_name = f"{climate_entity.name} {trv_suffix.replace('_', ' ').title()} Internal Temp"
+        self._attr_unique_id = f"{climate_entity.unique_id}_{trv_suffix}_internal_temp"
         self._attr_icon = "mdi:thermometer"
         self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
         self._attr_device_class = "temperature"
@@ -139,8 +155,9 @@ class SimpleThermostatTRVTargetTempSensor(SensorEntity):
         """Initialize the sensor."""
         self._climate_entity = climate_entity
         self._trv_index = trv_index
-        self._attr_name = f"{climate_entity.name} TRV {trv_index + 1} Target Temp"
-        self._attr_unique_id = f"{climate_entity.unique_id}_trv_{trv_index}_target_temp"
+        trv_suffix = _get_trv_suffix(climate_entity, trv_index)
+        self._attr_name = f"{climate_entity.name} {trv_suffix.replace('_', ' ').title()} Target Temp"
+        self._attr_unique_id = f"{climate_entity.unique_id}_{trv_suffix}_target_temp"
         self._attr_icon = "mdi:target"
         self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
         self._attr_device_class = "temperature"
@@ -155,6 +172,30 @@ class SimpleThermostatTRVTargetTempSensor(SensorEntity):
         pass
 
 
+class SimpleThermostatTRVValvePositionSensor(SensorEntity):
+    """Sensor showing TRV valve position."""
+
+    def __init__(self, climate_entity, trv_index):
+        """Initialize the sensor."""
+        self._climate_entity = climate_entity
+        self._trv_index = trv_index
+        trv_suffix = _get_trv_suffix(climate_entity, trv_index)
+        self._attr_name = f"{climate_entity.name} {trv_suffix.replace('_', ' ').title()} Valve Position"
+        self._attr_unique_id = f"{climate_entity.unique_id}_{trv_suffix}_valve_position"
+        self._attr_icon = "mdi:valve"
+        self._attr_native_unit_of_measurement = "%"
+        self._attr_device_class = None
+
+    @property
+    def state(self):
+        """Return the valve position."""
+        return self._climate_entity._valve_positions.get(self._trv_index, 0)
+
+    async def async_update(self):
+        """Update the sensor."""
+        pass
+
+
 class SimpleThermostatTRVHeatingBinarySensor(BinarySensorEntity):
     """Binary sensor showing if this TRV is heating."""
 
@@ -162,8 +203,9 @@ class SimpleThermostatTRVHeatingBinarySensor(BinarySensorEntity):
         """Initialize the sensor."""
         self._climate_entity = climate_entity
         self._trv_index = trv_index
-        self._attr_name = f"{climate_entity.name} TRV {trv_index + 1} Heating"
-        self._attr_unique_id = f"{climate_entity.unique_id}_trv_{trv_index}_heating"
+        trv_suffix = _get_trv_suffix(climate_entity, trv_index)
+        self._attr_name = f"{climate_entity.name} {trv_suffix.replace('_', ' ').title()} Heating"
+        self._attr_unique_id = f"{climate_entity.unique_id}_{trv_suffix}_heating"
         self._attr_icon = "mdi:fire"
         self._attr_device_class = "heat"
 

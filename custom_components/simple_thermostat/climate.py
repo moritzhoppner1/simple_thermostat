@@ -69,7 +69,18 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_NAME): cv.string,
         vol.Exclusive(CONF_TEMP_SENSOR_ID, "temp_sensor_config"): cv.string,
         vol.Exclusive(CONF_TEMP_SENSOR, "temp_sensor_config"): cv.entity_id,
-        vol.Exclusive(CONF_TRV_IDS, "trv_config"): vol.All(cv.ensure_list, [cv.string]),
+        vol.Exclusive(CONF_TRV_IDS, "trv_config"): vol.All(
+            cv.ensure_list,
+            [
+                vol.Any(
+                    cv.string,  # Backward compatibility: simple string
+                    vol.Schema({
+                        vol.Required("id"): cv.string,
+                        vol.Optional("name"): cv.string,
+                    })
+                )
+            ]
+        ),
         vol.Exclusive(CONF_VALVE_ENTITIES, "trv_config"): cv.entity_ids,
         vol.Optional(CONF_CLIMATE_ENTITIES): cv.entity_ids,
         vol.Required(CONF_AWAY_TEMP): vol.Coerce(float),
@@ -103,16 +114,30 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         temp_sensor = config.get(CONF_TEMP_SENSOR)
 
     # Support simplified trv_ids configuration
-    trv_ids = config.get(CONF_TRV_IDS)
-    if trv_ids:
+    trv_ids_config = config.get(CONF_TRV_IDS)
+    trv_names = []
+    if trv_ids_config:
+        # Parse TRV config (supports both string and dict format)
+        trv_ids = []
+        for trv_config in trv_ids_config:
+            if isinstance(trv_config, str):
+                # Backward compatibility: simple string
+                trv_ids.append(trv_config)
+                trv_names.append(None)
+            elif isinstance(trv_config, dict):
+                # New format: {id: "...", name: "..."}
+                trv_ids.append(trv_config["id"])
+                trv_names.append(trv_config.get("name"))
+
         # Auto-construct valve and climate entities from TRV IDs
         valve_entities = [f"number.{trv_id}_pi_heating_demand" for trv_id in trv_ids]
         climate_entities = [f"climate.{trv_id}" for trv_id in trv_ids]
-        _LOGGER.info(f"Auto-constructed entities from trv_ids: valves={valve_entities}, climates={climate_entities}")
+        _LOGGER.info(f"Auto-constructed entities from trv_ids: valves={valve_entities}, climates={climate_entities}, names={trv_names}")
     else:
         # Use explicit valve_entities and climate_entities
         valve_entities = config.get(CONF_VALVE_ENTITIES)
         climate_entities = config.get(CONF_CLIMATE_ENTITIES)
+        trv_ids = []
 
     away_temp = config.get(CONF_AWAY_TEMP)
     present_temp = config.get(CONF_PRESENT_TEMP)
@@ -136,6 +161,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         sync_remote_temp,
         initial_preset,
         unique_id,
+        trv_names,
     )
 
     async_add_entities([thermostat])
@@ -181,6 +207,7 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
         sync_remote_temp,
         initial_preset,
         unique_id,
+        trv_names=None,
     ):
         """Initialize the thermostat."""
         self._attr_name = name
@@ -188,6 +215,7 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
         self._temp_sensor = temp_sensor
         self._valve_entities = valve_entities
         self._climate_entities = climate_entities
+        self._trv_names = trv_names or []
         self._away_temp = away_temp
         self._present_temp = present_temp
         self._cosy_temp = cosy_temp

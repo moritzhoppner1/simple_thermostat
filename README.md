@@ -98,6 +98,8 @@ climate:
 
     # Sensor IDs (automatically constructs full entity IDs)
     temperature_sensor_id: living_room  # Creates: sensor.living_room_temperature
+
+    # TRV configuration - simple format (backward compatible)
     trv_ids:
       - living_room_trv  # Creates: number.living_room_trv_pi_heating_demand, climate.living_room_trv
 
@@ -117,7 +119,7 @@ climate:
     initial_preset: present
 ```
 
-**Example with Zigbee2MQTT hex IDs (use quotes):**
+**With custom TRV names (for better sensor names):**
 
 ```yaml
 climate:
@@ -125,14 +127,33 @@ climate:
     name: "Kaminzimmer"
     unique_id: "kaminzimmer_thermostat"
 
-    # Hex IDs must be quoted to prevent YAML parsing as numbers
     temperature_sensor_id: "0x983268fffe9878e4"
+
+    # TRV configuration with friendly names
     trv_ids:
-      - "0x08b95ffffe5184ce"
+      - id: "0x08b95ffffe5184ce"
+        name: "Hauptventil"  # Optional: creates sensor.kaminzimmer_hauptventil_*
 
     away_temp: 18.0
     present_temp: 21.0
     cosy_temp: 23.0
+```
+
+**Multiple TRVs with names:**
+
+```yaml
+climate:
+  - platform: simple_thermostat
+    name: "Kitchen"
+    temperature_sensor_id: kitchen
+    trv_ids:
+      - id: kitchen_trv_1
+        name: "Window"  # Creates: sensor.kitchen_window_valve_position
+      - id: kitchen_trv_2
+        name: "Door"    # Creates: sensor.kitchen_door_valve_position
+    away_temp: 16.0
+    present_temp: 20.0
+    cosy_temp: 22.0
 ```
 
 **Advanced configuration (explicit entity IDs):**
