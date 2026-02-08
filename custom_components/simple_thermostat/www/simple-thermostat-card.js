@@ -741,8 +741,12 @@ class SimpleThermostatCard extends HTMLElement {
   _getChartSeries(baseName, tempSensorId) {
     const series = [];
 
+    console.log('Building chart series for baseName:', baseName);
+    console.log('Temperature sensor ID:', tempSensorId);
+
     // Room temperature (external sensor)
     if (this._hass.states[tempSensorId]) {
+      console.log('✓ Found room temp sensor:', tempSensorId);
       series.push({
         entity: tempSensorId,
         name: 'Room Temp',
@@ -750,6 +754,8 @@ class SimpleThermostatCard extends HTMLElement {
         stroke_width: 3,
         yaxis_id: 'temp'
       });
+    } else {
+      console.log('✗ Room temp sensor not found:', tempSensorId);
     }
 
     // Target temperature

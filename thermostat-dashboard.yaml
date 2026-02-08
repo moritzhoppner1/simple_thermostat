@@ -3,21 +3,60 @@ views:
   - title: Alle Räume
     path: heizung
     icon: mdi:radiator
-    panel: true
     cards:
-      - type: grid
-        columns: 4
-        square: false
+      - type: vertical-stack
         cards:
-          # ROW 1: Kaminzimmer, Büro Annie, Küche, Fernsehzimmer
-          - type: custom:simple-thermostat-card
-            entity: climate.st_kaminzimmer
-          - type: custom:simple-thermostat-card
-            entity: climate.st_buero_annie
-          - type: custom:simple-thermostat-card
-            entity: climate.st_kueche
-          - type: custom:simple-thermostat-card
-            entity: climate.st_fernsehzimmer
-          # ROW 2: Schlafzimmer
-          - type: custom:simple-thermostat-card
-            entity: climate.st_schlafzimmer
+          - type: markdown
+            content: " "
+            card_mod:
+              style: |
+                ha-card {
+                  height: 16px;
+                  background: transparent;
+                  box-shadow: none;
+                }
+      - type: horizontal-stack
+        cards:
+          - type: markdown
+            content: " "
+            card_mod:
+              style: |
+                ha-card {
+                  width: 16px;
+                  background: transparent;
+                  box-shadow: none;
+                }
+          - type: grid
+            columns: 4
+            square: false
+            cards:
+              - type: custom:simple-thermostat-card
+                entity: climate.st_kaminzimmer
+              - type: custom:simple-thermostat-card
+                entity: climate.st_buro_annie
+              - type: custom:simple-thermostat-card
+                entity: climate.st_kuche
+              - type: custom:simple-thermostat-card
+                entity: climate.st_fernsehzimmer
+              - type: custom:simple-thermostat-card
+                entity: climate.st_schlafzimmer
+          - type: markdown
+            content: " "
+            card_mod:
+              style: |
+                ha-card {
+                  width: 16px;
+                  background: transparent;
+                  box-shadow: none;
+                }
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: " "
+            card_mod:
+              style: |
+                ha-card {
+                  height: 16px;
+                  background: transparent;
+                  box-shadow: none;
+                }
