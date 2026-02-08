@@ -189,7 +189,8 @@ class SimpleThermostatTRVValvePositionSensor(SensorEntity):
     @property
     def state(self):
         """Return the valve position."""
-        return self._climate_entity._valve_positions.get(self._trv_index, 0)
+        valve_entity = self._climate_entity._valve_entities[self._trv_index]
+        return self._climate_entity._valve_positions.get(valve_entity, 0)
 
     async def async_update(self):
         """Update the sensor."""
