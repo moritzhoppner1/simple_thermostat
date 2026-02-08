@@ -270,7 +270,7 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
     ):
         """Initialize the thermostat."""
         self.hass = hass
-        self._attr_name = name
+        self._attr_name = f"ST {name}"
         self._attr_unique_id = unique_id
         self._temp_sensor = temp_sensor
         self._valve_entities = valve_entities
