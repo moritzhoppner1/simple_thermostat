@@ -1,0 +1,42 @@
+set_preset_temperature:
+  name: Set Preset Temperature
+  description: Update preset temperatures (AWAY, PRESENT, COSY) for a Simple Thermostat
+  fields:
+    entity_id:
+      name: Entity
+      description: The climate entity to update
+      required: true
+      selector:
+        entity:
+          domain: climate
+          integration: simple_thermostat
+    away_temp:
+      name: Away Temperature
+      description: Temperature for AWAY preset (°C)
+      required: false
+      selector:
+        number:
+          min: 10
+          max: 25
+          step: 0.5
+          unit_of_measurement: "°C"
+    present_temp:
+      name: Present Temperature
+      description: Temperature for PRESENT preset (°C)
+      required: false
+      selector:
+        number:
+          min: 10
+          max: 25
+          step: 0.5
+          unit_of_measurement: "°C"
+    cosy_temp:
+      name: Cosy Temperature
+      description: Temperature for COSY preset (°C)
+      required: false
+      selector:
+        number:
+          min: 10
+          max: 25
+          step: 0.5
+          unit_of_measurement: "°C"
