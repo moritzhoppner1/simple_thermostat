@@ -787,8 +787,10 @@ class SimpleThermostatCard extends HTMLElement {
       `sensor.${baseName}_trv_internal_temp`,
       `sensor.${baseName}_trv_1_internal_temp`
     ];
+    console.log('Checking TRV temp sensors:', trvTempSensors);
     for (const sensor of trvTempSensors) {
       if (this._hass.states[sensor]) {
+        console.log('✓ Found TRV temp sensor:', sensor);
         series.push({
           entity: sensor,
           name: 'TRV Temp',
@@ -800,6 +802,9 @@ class SimpleThermostatCard extends HTMLElement {
         break;
       }
     }
+    if (!trvTempSensors.some(s => this._hass.states[s])) {
+      console.log('✗ No TRV temp sensors found');
+    }
 
     // TRV target temp (try both hauptventil and trv naming)
     const trvTargetSensors = [
@@ -807,8 +812,10 @@ class SimpleThermostatCard extends HTMLElement {
       `sensor.${baseName}_trv_target_temp`,
       `sensor.${baseName}_trv_1_target_temp`
     ];
+    console.log('Checking TRV target sensors:', trvTargetSensors);
     for (const sensor of trvTargetSensors) {
       if (this._hass.states[sensor]) {
+        console.log('✓ Found TRV target sensor:', sensor);
         series.push({
           entity: sensor,
           name: 'TRV Target',
@@ -821,6 +828,9 @@ class SimpleThermostatCard extends HTMLElement {
         break;
       }
     }
+    if (!trvTargetSensors.some(s => this._hass.states[s])) {
+      console.log('✗ No TRV target sensors found');
+    }
 
     // Valve position
     const valveSensors = [
@@ -828,8 +838,10 @@ class SimpleThermostatCard extends HTMLElement {
       `sensor.${baseName}_trv_valve_position`,
       `sensor.${baseName}_trv_1_valve_position`
     ];
+    console.log('Checking valve sensors:', valveSensors);
     for (const sensor of valveSensors) {
       if (this._hass.states[sensor]) {
+        console.log('✓ Found valve sensor:', sensor);
         series.push({
           entity: sensor,
           name: 'Valve',
@@ -841,6 +853,9 @@ class SimpleThermostatCard extends HTMLElement {
         break;
       }
     }
+    if (!valveSensors.some(s => this._hass.states[s])) {
+      console.log('✗ No valve sensors found');
+    }
 
     // Heating status
     const heatingSensors = [
@@ -848,8 +863,10 @@ class SimpleThermostatCard extends HTMLElement {
       `binary_sensor.${baseName}_trv_heating`,
       `binary_sensor.${baseName}_trv_1_heating`
     ];
+    console.log('Checking heating sensors:', heatingSensors);
     for (const sensor of heatingSensors) {
       if (this._hass.states[sensor]) {
+        console.log('✓ Found heating sensor:', sensor);
         series.push({
           entity: sensor,
           name: 'Heating',
@@ -864,6 +881,12 @@ class SimpleThermostatCard extends HTMLElement {
         break;
       }
     }
+    if (!heatingSensors.some(s => this._hass.states[s])) {
+      console.log('✗ No heating sensors found');
+    }
+
+    console.log('Total series added to chart:', series.length);
+    console.log('Series:', series.map(s => s.name));
 
     return series;
   }
