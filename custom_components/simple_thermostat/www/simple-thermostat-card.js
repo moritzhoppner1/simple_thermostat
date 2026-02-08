@@ -339,11 +339,17 @@ class SimpleThermostatCard extends HTMLElement {
     const currentTemp = entity.attributes.current_temperature;
     const targetTemp = entity.attributes.temperature;
 
+    // Extract base name and check heating status
+    const entityId = this._config.entity;
+    const baseName = entityId.replace('climate.', '');
+    const heatingEntity = this._hass.states[`binary_sensor.${baseName}_heating`];
+    const isHeating = heatingEntity ? heatingEntity.state === 'on' : false;
+
     const thermostatSection = this.shadowRoot.getElementById('thermostat');
     thermostatSection.innerHTML = `
       <div>
         <div class="temperature-display">${currentTemp !== undefined ? currentTemp.toFixed(1) : '--'}°C</div>
-        <div class="target-temp">Target: ${targetTemp !== undefined ? targetTemp.toFixed(1) : '--'}°C</div>
+        <div class="target-temp">Target: ${targetTemp !== undefined ? targetTemp.toFixed(1) : '--'}°C ${isHeating ? '🔥' : ''}</div>
       </div>
     `;
   }
@@ -418,10 +424,6 @@ class SimpleThermostatCard extends HTMLElement {
         <div class="status-item">
           <div class="status-label">Temperature Error</div>
           <div class="status-value">${tempError}°C</div>
-        </div>
-        <div class="status-item">
-          <div class="status-label">Heating Status</div>
-          <div class="status-value ${isHeating ? 'heating' : ''}">${isHeating ? '🔥 HEATING' : 'OFF'}</div>
         </div>
       </div>
     `;
