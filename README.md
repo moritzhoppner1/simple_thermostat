@@ -51,22 +51,40 @@ A simple, effective Home Assistant thermostat integration for Bosch BTH-RA TRVs 
 
 ## Installation
 
-### Quick Install (One-Liner)
+### Method 1: HACS Custom Repository (Easiest)
+
+**Add as custom repository in HACS:**
+
+1. Open **HACS → Integrations**
+2. Click **⋮** (three dots, top right)
+3. Click **Custom repositories**
+4. Add:
+   - **Repository:** `https://github.com/moritzhoppner1/simple_thermostat`
+   - **Category:** Integration
+5. Click **Add**
+6. Search "Simple Thermostat" in HACS
+7. Click **Download**
+8. Restart Home Assistant
+
+**Benefits:**
+- ✅ Easy installation via UI
+- ✅ Automatic update notifications
+- ✅ One-click updates
+
+### Method 2: Quick Install (One-Liner)
 
 **Install directly from GitHub:**
 
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/YOUR_USERNAME/simple_thermostat/main/install.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/moritzhoppner1/simple_thermostat/main/install.sh)
 ```
-
-*Note: Replace `YOUR_USERNAME` with your GitHub username once published.*
 
 Or specify custom Home Assistant directory:
 ```bash
-HA_CONFIG_DIR=/home/homeassistant/.homeassistant bash <(curl -sSL https://raw.githubusercontent.com/YOUR_USERNAME/simple_thermostat/main/install.sh)
+HA_CONFIG_DIR=/home/homeassistant/.homeassistant bash <(curl -sSL https://raw.githubusercontent.com/moritzhoppner1/simple_thermostat/main/install.sh)
 ```
 
-### Method 1: Git Clone (Manual)
+### Method 3: Git Clone (Manual)
 
 **Directly clone into your Home Assistant config:**
 

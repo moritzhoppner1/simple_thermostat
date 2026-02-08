@@ -1,0 +1,5 @@
+{
+  "name": "Simple Thermostat",
+  "render_readme": true,
+  "domains": ["climate", "sensor", "binary_sensor"]
+}
