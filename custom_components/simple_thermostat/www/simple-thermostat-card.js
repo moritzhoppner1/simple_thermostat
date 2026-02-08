@@ -41,20 +41,23 @@ class SimpleThermostatCard extends HTMLElement {
         align-items: center;
         margin-bottom: 16px;
         padding: 16px;
-        background: var(--ha-card-background, var(--card-background-color, white));
-        border-radius: 8px;
+        background: var(--card-background-color, var(--ha-card-background, #fff));
+        border-radius: var(--ha-card-border-radius, 12px);
+        box-shadow: var(--ha-card-box-shadow, 0 2px 8px rgba(0,0,0,0.1));
       }
 
       .temperature-display {
         font-size: 48px;
         font-weight: 300;
         line-height: 1;
+        color: var(--primary-text-color, #000);
       }
 
       .target-temp {
         font-size: 24px;
-        color: var(--secondary-text-color);
+        color: var(--secondary-text-color, #666);
         margin-top: 8px;
+        font-weight: 400;
       }
 
       .controls {
@@ -72,17 +75,20 @@ class SimpleThermostatCard extends HTMLElement {
       .preset-button {
         flex: 1;
         padding: 12px;
-        border: 1px solid var(--primary-color);
-        background: var(--ha-card-background, white);
-        border-radius: 8px;
+        border: 2px solid var(--primary-color, #03a9f4);
+        background: var(--card-background-color, #fff);
+        color: var(--primary-color, #03a9f4);
+        border-radius: var(--ha-card-border-radius, 8px);
         cursor: pointer;
         transition: all 0.2s;
         font-size: 14px;
+        font-weight: 600;
       }
 
       .preset-button.active {
-        background: var(--primary-color);
-        color: white;
+        background: var(--primary-color, #03a9f4);
+        color: var(--text-primary-color, #fff);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
       }
 
       .preset-button:hover {
@@ -97,22 +103,26 @@ class SimpleThermostatCard extends HTMLElement {
       }
 
       .status-item {
-        padding: 12px;
-        background: var(--ha-card-background, white);
-        border-radius: 8px;
-        border: 1px solid var(--divider-color);
+        padding: 14px;
+        background: var(--card-background-color, #fff);
+        border-radius: var(--ha-card-border-radius, 8px);
+        border: 1px solid var(--divider-color, #e0e0e0);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
       }
 
       .status-label {
-        font-size: 12px;
-        color: var(--secondary-text-color);
+        font-size: 11px;
+        color: var(--secondary-text-color, #666);
         text-transform: uppercase;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
       }
 
       .status-value {
-        font-size: 18px;
-        font-weight: 500;
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--primary-text-color, #000);
       }
 
       .status-value.heating {
@@ -165,13 +175,16 @@ class SimpleThermostatCard extends HTMLElement {
       }
 
       .button {
-        padding: 8px 16px;
-        background: var(--primary-color);
-        color: white;
+        padding: 10px 18px;
+        background: var(--primary-color, #03a9f4);
+        color: var(--text-primary-color, #fff);
         border: none;
-        border-radius: 4px;
+        border-radius: var(--ha-card-border-radius, 8px);
         cursor: pointer;
         font-size: 14px;
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        transition: all 0.2s;
       }
 
       .button:hover {
