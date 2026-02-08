@@ -28,19 +28,15 @@
   # ===== OPTIONAL: Schedule-based automation =====
   schedule:
     weekday:
-      - time: "06:00"
-        preset: present  # Wake up - comfortable
-      - time: "08:00"
-        preset: away     # At work - energy saving
-      - time: "17:00"
-        preset: present  # Back home - comfortable
+      - time: "07:00"
+        preset: present  # Morning - turn on heating
       - time: "22:00"
-        preset: cosy     # Evening - extra warm
+        preset: away     # Night - turn off heating
     weekend:
-      - time: "08:00"
-        preset: present  # Wake up later on weekend
-      - time: "23:00"
-        preset: cosy     # Stay up later
+      - time: "07:00"
+        preset: present  # Morning - turn on heating
+      - time: "22:00"
+        preset: away     # Night - turn off heating
 
   # ===== OPTIONAL: Override sensors (pass your custom entities) =====
   # presence_sensor: binary_sensor.kaminzimmer_occupied  # Room occupied → PRESENT
@@ -51,3 +47,175 @@
   # ===== OPTIONAL: Tuning parameters =====
   # presence_away_delay: 15           # Minutes after presence clears (default: 15)
   # outdoor_temp_threshold: 20.0      # °C (default: 20.0)
+
+# ==============================================================================
+# BÜRO ANNIE
+# ==============================================================================
+- platform: simple_thermostat
+  name: "Büro Annie"
+  unique_id: "buero_annie_thermostat"
+
+  # Sensor IDs
+  temperature_sensor_id: "temperatursensor_annie_schreibtisch"
+
+  # TRV configuration
+  trv_ids:
+    - id: "0x08b95ffffe50f60b"
+      name: "Büro Ventil"
+
+  # Preset temperatures (°C)
+  away_temp: 16.0
+  present_temp: 21.0
+  cosy_temp: 23.0
+
+  # Control thresholds
+  binary_threshold: 0.5
+  hysteresis: 0.3
+
+  # Remote temperature sync
+  sync_remote_temp: true
+
+  # Initial preset
+  initial_preset: present
+
+  # Schedule: 07:00-19:00 → 21°C, outside → 16°C
+  schedule:
+    weekday:
+      - time: "07:00"
+        preset: present  # 21°C
+      - time: "22:00"
+        preset: away     # 16°C
+    weekend:
+      - time: "10:00"
+        preset: present  # 21°C
+      - time: "19:00"
+        preset: away     # 16°C
+
+# ==============================================================================
+# KÜCHE
+# ==============================================================================
+- platform: simple_thermostat
+  name: "Küche"
+  unique_id: "kueche_thermostat"
+
+  # Sensor IDs
+  temperature_sensor_id: "0x983268fffe987551"
+
+  # TRV configuration
+  trv_ids:
+    - id: "0x08b95ffffe50eb0f"
+      name: "Küche Ventil"
+
+  # Preset temperatures (°C)
+  away_temp: 16.0
+  present_temp: 20.0
+  cosy_temp: 22.0
+
+  # Control thresholds
+  binary_threshold: 0.5
+  hysteresis: 0.3
+
+  # Remote temperature sync
+  sync_remote_temp: true
+
+  # Initial preset
+  initial_preset: present
+
+  # Schedule: 07:00-20:00 → 20°C, outside → 16°C
+  schedule:
+    weekday:
+      - time: "07:00"
+        preset: present  # 20°C
+      - time: "20:00"
+        preset: away     # 16°C
+    weekend:
+      - time: "07:00"
+        preset: present  # 20°C
+      - time: "20:00"
+        preset: away     # 16°C
+
+# ==============================================================================
+# FERNSEHZIMMER
+# ==============================================================================
+- platform: simple_thermostat
+  name: "Fernsehzimmer"
+  unique_id: "fernsehzimmer_thermostat"
+
+  # Sensor IDs
+  temperature_sensor_id: "0x983268fffe953a5f"
+
+  # TRV configuration
+  trv_ids:
+    - id: "0x08b95ffffe50eb23"
+      name: "Fernsehzimmer Ventil"
+
+  # Preset temperatures (°C)
+  away_temp: 16.0
+  present_temp: 19.0
+  cosy_temp: 22.0
+
+  # Control thresholds
+  binary_threshold: 0.5
+  hysteresis: 0.3
+
+  # Remote temperature sync
+  sync_remote_temp: true
+
+  # Initial preset
+  initial_preset: present
+
+  # Schedule: 10:00-23:00 → 18°C, outside → 16°C
+  schedule:
+    weekday:
+      - time: "16:00"
+        preset: present  # 18°C
+      - time: "23:00"
+        preset: away     # 16°C
+    weekend:
+      - time: "10:00"
+        preset: present  # 18°C
+      - time: "23:00"
+        preset: away     # 16°C
+
+# ==============================================================================
+# SCHLAFZIMMER
+# ==============================================================================
+- platform: simple_thermostat
+  name: "Schlafzimmer"
+  unique_id: "schlafzimmer_thermostat"
+
+  # Sensor IDs
+  temperature_sensor_id: "0x983268fffe650f60"
+
+  # TRV configuration
+  trv_ids:
+    - id: "0x08b95ffffe50f3e2"
+      name: "Schlafzimmer Ventil"
+
+  # Preset temperatures (°C)
+  away_temp: 5.0
+  present_temp: 16.0
+  cosy_temp: 16.0
+
+  # Control thresholds
+  binary_threshold: 0.5
+  hysteresis: 0.3
+
+  # Remote temperature sync
+  sync_remote_temp: true
+
+  # Initial preset
+  initial_preset: away
+
+  # Schedule: 09:00-18:00 → 16°C, outside → 5°C (sleeping)
+  schedule:
+    weekday:
+      - time: "09:00"
+        preset: present  # 16°C
+      - time: "18:00"
+        preset: 'off'  # Turn off heating for cold night
+    weekend:
+      - time: "09:00"
+        preset: present  # 16°C
+      - time: "18:00"
+        preset: 'off'  # Turn off heating for cold night

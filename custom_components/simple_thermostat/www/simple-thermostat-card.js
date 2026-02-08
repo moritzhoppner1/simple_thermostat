@@ -367,9 +367,9 @@ class SimpleThermostatCard extends HTMLElement {
           </div>
           <div class="details-content" id="details-content">
             <div id="status"></div>
-            <div id="sliders"></div>
             <div id="chart"></div>
             <div id="logs"></div>
+            <div id="sliders"></div>
           </div>
         </div>
       </div>
@@ -517,16 +517,10 @@ class SimpleThermostatCard extends HTMLElement {
     const statusSection = this.shadowRoot.getElementById('status');
     statusSection.innerHTML = `
       ${overrideIndicators}
-      <div class="status-grid">
-        <div class="status-item" title="${this._getControlModeTooltip(controlMode)}">
-          <div class="status-label">Control Mode</div>
-          <div class="status-value">
-            <span class="mode-badge ${controlMode}">${controlMode.replace('_', ' ')}</span>
-          </div>
-        </div>
-        <div class="status-item" title="Difference between target and current temperature">
-          <div class="status-label">Temperature Error</div>
-          <div class="status-value">${tempError}°C</div>
+      <div class="status-item" title="${this._getControlModeTooltip(controlMode)}" style="margin-bottom: 16px;">
+        <div class="status-label">Control Mode</div>
+        <div class="status-value">
+          <span class="mode-badge ${controlMode}">${controlMode.replace('_', ' ')}</span>
         </div>
       </div>
     `;
