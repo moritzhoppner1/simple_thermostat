@@ -493,18 +493,28 @@ class SimpleThermostatCard extends HTMLElement {
     statusSection.innerHTML = `
       ${overrideIndicators}
       <div class="status-grid">
-        <div class="status-item">
+        <div class="status-item" title="${this._getControlModeTooltip(controlMode)}">
           <div class="status-label">Control Mode</div>
           <div class="status-value">
             <span class="mode-badge ${controlMode}">${controlMode.replace('_', ' ')}</span>
           </div>
         </div>
-        <div class="status-item">
+        <div class="status-item" title="Difference between target and current temperature">
           <div class="status-label">Temperature Error</div>
           <div class="status-value">${tempError}°C</div>
         </div>
       </div>
     `;
+  }
+
+  _getControlModeTooltip(mode) {
+    const tooltips = {
+      'binary_heat': 'Binary Heat: Room >0.5°C below target → Valve 100%, TRV 30°C (full power heating)',
+      'proportional': 'Proportional: Room within ±0.5°C of target → TRV calculates precise valve position',
+      'binary_cool': 'Binary Cool: Room >0.5°C above target → Valve 0%, TRV 5°C (heating off)',
+      'off': 'Off: Heating disabled'
+    };
+    return tooltips[mode] || 'Unknown control mode';
   }
 
   _updateSliders(entity) {
