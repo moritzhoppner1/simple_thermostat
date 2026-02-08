@@ -51,9 +51,7 @@ A simple, effective Home Assistant thermostat integration for Bosch BTH-RA TRVs 
 
 ## Installation
 
-### Method 1: HACS Custom Repository (Easiest)
-
-**Add as custom repository in HACS:**
+Install via HACS custom repository:
 
 1. Open **HACS → Integrations**
 2. Click **⋮** (three dots, top right)
@@ -66,76 +64,7 @@ A simple, effective Home Assistant thermostat integration for Bosch BTH-RA TRVs 
 7. Click **Download**
 8. Restart Home Assistant
 
-**Benefits:**
-- ✅ Easy installation via UI
-- ✅ Automatic update notifications
-- ✅ One-click updates
-
-### Method 2: Quick Install (One-Liner)
-
-**Install directly from GitHub:**
-
-```bash
-bash <(curl -sSL https://raw.githubusercontent.com/moritzhoppner1/simple_thermostat/main/install.sh)
-```
-
-Or specify custom Home Assistant directory:
-```bash
-HA_CONFIG_DIR=/home/homeassistant/.homeassistant bash <(curl -sSL https://raw.githubusercontent.com/moritzhoppner1/simple_thermostat/main/install.sh)
-```
-
-### Method 3: Git Clone (Manual)
-
-**Directly clone into your Home Assistant config:**
-
-```bash
-cd /config/custom_components
-git clone https://github.com/YOUR_USERNAME/simple_thermostat.git
-cd simple_thermostat
-# Copy just the integration files
-cp -r custom_components/simple_thermostat /config/custom_components/
-cd ..
-rm -rf simple_thermostat  # Remove the cloned repo folder
-```
-
-**Or keep as submodule for easy updates:**
-
-```bash
-cd /config
-git submodule add https://github.com/YOUR_USERNAME/simple_thermostat.git custom_components/simple_thermostat
-cd custom_components/simple_thermostat
-# Use the integration directly from the submodule
-```
-
-### Method 2: Download from GitHub
-
-1. Go to: `https://github.com/YOUR_USERNAME/simple_thermostat`
-2. Click **Code → Download ZIP**
-3. Extract the ZIP file
-4. Copy `simple_thermostat/custom_components/simple_thermostat/` to `/config/custom_components/`
-
-### Method 3: Manual Copy
-
-If you already have the files locally:
-
-```bash
-cp -r /path/to/simple_thermostat/custom_components/simple_thermostat /config/custom_components/
-```
-
-### Post-Installation Steps (All Methods)
-
-1. **Restart Home Assistant**
-
-2. **Enable Custom Card (Optional):**
-   - Go to **Settings → Dashboards → Resources**
-   - Click **Add Resource**
-   - URL: `/simple_thermostat/simple-thermostat-card.js`
-   - Type: **JavaScript Module**
-
-3. **Verify Installation:**
-   - Check logs for: `"Registered Simple Thermostat card"`
-   - Go to **Developer Tools → States**
-   - Look for your configured climate entities
+The custom card is automatically registered - no manual resource configuration needed!
 
 ## Configuration
 
