@@ -471,14 +471,30 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
         if hvac_mode == HVACMode.HEAT:
             self._hvac_mode = HVACMode.HEAT
             self._enabled = True
-            self._log_action(f"HVAC mode set to HEAT")
+
+            # If preset was OFF, restore to PRESENT
+            if self._preset_mode == PRESET_OFF:
+                _LOGGER.info("%s: HVAC mode set to HEAT - restoring PRESENT preset", self.name)
+                self._preset_mode = PRESET_PRESENT
+                self._update_target_temp_from_preset()
+                self._preset_manager.set_manual_preset(PRESET_PRESENT)
+
+            self._log_action(f"HVAC mode set to HEAT (target: {self._target_temp}°C)")
             await self._async_control_heating()
         elif hvac_mode == HVACMode.OFF:
+            _LOGGER.info("%s: HVAC mode set to OFF - forcing valves to 0%% and setting preset to OFF", self.name)
             self._hvac_mode = HVACMode.OFF
             self._enabled = False
-            self._log_action(f"HVAC mode set to OFF")
-            await self._async_turn_off_all()
             self.control_mode = CONTROL_MODE_OFF
+
+            # Sync preset to OFF
+            self._preset_mode = PRESET_OFF
+            self._update_target_temp_from_preset()
+            self._preset_manager.set_manual_preset(PRESET_OFF)
+
+            # Force all valves to 0%
+            await self._async_turn_off_all()
+            self._log_action(f"HVAC mode set to OFF - heating disabled")
 
         self.async_write_ha_state()
 
@@ -509,9 +525,27 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
         # Update local state
         self._preset_mode = preset_mode
         self._update_target_temp_from_preset()
-        self._log_action(f"Preset changed to {preset_mode.upper()} ({self._target_temp}°C)")
 
-        if self._hvac_mode == HVACMode.HEAT:
+        # Synchronize HVAC mode with preset
+        if preset_mode == PRESET_OFF:
+            # Preset OFF → Turn off HVAC completely
+            _LOGGER.info("%s: Preset OFF - turning off HVAC mode and forcing valves to 0%%", self.name)
+            self._hvac_mode = HVACMode.OFF
+            self._enabled = False
+            self.control_mode = CONTROL_MODE_OFF
+            await self._async_turn_off_all()
+            self._log_action(f"Preset OFF - heating disabled")
+        else:
+            # Preset AWAY/PRESENT/COSY → Ensure HVAC is HEAT
+            if self._hvac_mode == HVACMode.OFF:
+                _LOGGER.info("%s: Preset %s - automatically enabling HVAC mode HEAT", self.name, preset_mode)
+                self._hvac_mode = HVACMode.HEAT
+                self._enabled = True
+                self._log_action(f"Preset {preset_mode.upper()} - HVAC enabled ({self._target_temp}°C)")
+            else:
+                self._log_action(f"Preset changed to {preset_mode.upper()} ({self._target_temp}°C)")
+
+            # Run control logic
             await self._async_control_heating()
 
         self.async_write_ha_state()
@@ -572,6 +606,17 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
         """Refresh all sensor readings every 15 seconds."""
         await self._async_read_valve_positions()
         await self._async_read_trv_temps()
+
+        # Safety check: If HVAC is OFF but any valve is open, force them closed
+        if self._hvac_mode == HVACMode.OFF:
+            any_valve_open = any(pos > 0 for pos in self._valve_positions.values())
+            if any_valve_open:
+                _LOGGER.warning(
+                    "%s: SAFETY CHECK - HVAC is OFF but valves are open. Forcing to 0%%",
+                    self.name
+                )
+                await self._async_turn_off_all()
+
         self.async_write_ha_state()
 
     async def _async_read_trv_temps(self):
