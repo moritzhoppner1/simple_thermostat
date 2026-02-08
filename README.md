@@ -8,24 +8,25 @@ A simple, effective Home Assistant thermostat integration for Bosch BTH-RA TRVs 
 
 **Solution:** Simple Thermostat uses a hybrid approach:
 - **Binary control** (0% or 100%) when far from target → Fast heating with full power
-- **Proportional control** when near target (±0.5°C) → Smooth temperature maintenance
+- **Proportional control** when near target → Smooth temperature maintenance
 - **No complex algorithms** → Simple, predictable, debuggable
 
 ## Features
 
 ✅ **Hybrid Control Strategy**
-- Binary 100% valve when >0.5°C below target
-- Proportional TRV control when within ±0.5°C of target
-- Binary 0% valve when >0.5°C above target
+- Binary 100% valve when error exceeds binary_threshold below target
+- Proportional TRV control when within binary_threshold of target
+- Binary 0% valve when error exceeds binary_threshold above target
 
 ✅ **Multi-TRV Support**
 - Control multiple TRVs as one thermostat
 - All valves synchronized
 
-✅ **Three Preset Modes**
+✅ **Four Preset Modes**
 - AWAY: Lower temperature when away
 - PRESENT: Normal comfortable temperature
 - COSY: Extra warm temperature
+- OFF: Valve closed, temperature set to 5°C
 
 ✅ **External Temperature Sensor**
 - Uses accurate room sensor, not TRV's internal sensor
@@ -201,25 +202,25 @@ climate:
 ```
 Temperature Error (target - current):
 
-> +0.5°C  →  BINARY HEAT MODE
-              - Valve: 100% (fully open)
-              - TRV Target: 30°C (max)
-              - Result: Fast heating with full power
+> binary_threshold  →  BINARY HEAT MODE
+                        - Valve: 100% (fully open)
+                        - TRV Target: 30°C (max)
+                        - Result: Fast heating with full power
 
-±0.5°C    →  PROPORTIONAL MODE
-              - TRV Target: Calculated from external sensor
-              - Valve: Controlled by TRV
-              - Result: Smooth temperature control
+±binary_threshold  →  PROPORTIONAL MODE
+                       - TRV Target: Calculated from external sensor
+                       - Valve: Controlled by TRV
+                       - Result: Smooth temperature control
 
-< -0.5°C  →  BINARY COOL MODE
-              - Valve: 0% (closed)
-              - TRV Target: 5°C (min)
-              - Result: Heating stopped
+< -binary_threshold  →  BINARY COOL MODE
+                         - Valve: 0% (closed)
+                         - TRV Target: 5°C (min)
+                         - Result: Heating stopped
 ```
 
 ### Proportional Mode Calculation
 
-When within ±0.5°C of target:
+When within binary_threshold of target:
 
 ```python
 TRV_target = (room_target - external_temp) + trv_internal_temp
@@ -282,10 +283,11 @@ entity: climate.living_room
 
 That's it! The card automatically:
 - Finds all related sensors
-- Shows temperature control with +/- buttons
-- Displays preset mode buttons (AWAY/PRESENT/COSY)
+- Shows current and target temperature
+- Displays preset mode buttons (AWAY/PRESENT/COSY/OFF)
 - Shows control mode, temperature error, heating status
 - Includes collapsible logs (click "Recent Actions" to expand)
+- Displays temperature history graph (requires ApexCharts card)
 
 ### Via Standard UI Card
 
@@ -373,7 +375,7 @@ Should show current temperature, not "unavailable"
 ### Valve always at 0% or 100%
 
 **Check binary threshold:**
-- Default 0.5°C may be too large/small for your room
+- Default binary_threshold may be too large/small for your room
 - Adjust `binary_threshold` in configuration
 - Monitor `sensor.living_room_temperature_error`
 
@@ -416,7 +418,7 @@ tail -f /config/home-assistant.log | grep simple_thermostat
 | **Multi-TRV** | ✅ Yes | ✅ Yes | ❌ No |
 | **Valve Position Control** | ✅ Yes | ✅ Yes | ❌ No (switches only) |
 | **External Sensor** | ✅ Yes | ✅ Yes | ✅ Yes |
-| **Preset Modes** | 3 (AWAY/PRESENT/COSY) | Many | 7 |
+| **Preset Modes** | 4 (AWAY/PRESENT/COSY/OFF) | Many | 7 |
 | **Configuration** | YAML only | UI + YAML | YAML only |
 | **Complexity** | Low | Very High | Low |
 | **Diagnostic Sensors** | ✅ Yes | ✅ Yes | ❌ No |

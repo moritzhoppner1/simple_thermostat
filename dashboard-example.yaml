@@ -122,14 +122,12 @@ views:
 #
 # The custom:simple-thermostat-card includes:
 #
-# 1. TEMPERATURE CONTROL
+# 1. TEMPERATURE DISPLAY
 #    - Large current temperature display
 #    - Target temperature display
-#    - +0.5° and -0.5° buttons
-#    - ON/OFF toggle button
 #
 # 2. PRESET BUTTONS
-#    - AWAY / PRESENT / COSY buttons
+#    - AWAY / PRESENT / COSY / OFF buttons
 #    - Current preset highlighted
 #    - One-click preset changes
 #

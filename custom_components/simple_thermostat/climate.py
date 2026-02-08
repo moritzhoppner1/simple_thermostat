@@ -56,6 +56,7 @@ DEFAULT_INITIAL_PRESET = "present"
 PRESET_AWAY = "away"
 PRESET_PRESENT = "present"
 PRESET_COSY = "cosy"
+PRESET_OFF = "off"
 
 CONTROL_MODE_BINARY_HEAT = "binary_heat"
 CONTROL_MODE_BINARY_COOL = "binary_cool"
@@ -92,7 +93,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_HYSTERESIS, default=DEFAULT_HYSTERESIS): vol.Coerce(float),
         vol.Optional(CONF_SYNC_REMOTE_TEMP, default=DEFAULT_SYNC_REMOTE_TEMP): cv.boolean,
         vol.Optional(CONF_INITIAL_PRESET, default=DEFAULT_INITIAL_PRESET): vol.In(
-            [PRESET_AWAY, PRESET_PRESENT, PRESET_COSY]
+            [PRESET_AWAY, PRESET_PRESENT, PRESET_COSY, PRESET_OFF]
         ),
         vol.Optional(CONF_UNIQUE_ID): cv.string,
     }
@@ -409,6 +410,8 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
             self._target_temp = self._present_temp
         elif self._preset_mode == PRESET_COSY:
             self._target_temp = self._cosy_temp
+        elif self._preset_mode == PRESET_OFF:
+            self._target_temp = 5.0
 
     async def _async_temp_sensor_changed(self, event):
         """Handle temperature sensor changes."""

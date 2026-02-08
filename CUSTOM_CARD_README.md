@@ -10,14 +10,12 @@ The Simple Thermostat integration now includes a **custom Lovelace card** that p
 **File:** `custom_components/simple_thermostat/www/simple-thermostat-card.js`
 
 A custom Web Component that displays:
-- **Temperature Control**
+- **Temperature Display**
   - Current temperature (large display)
   - Target temperature
-  - +/- 0.5° adjustment buttons
-  - ON/OFF toggle button
 
 - **Preset Mode Buttons**
-  - AWAY / PRESENT / COSY buttons
+  - AWAY / PRESENT / COSY / OFF buttons
   - Current mode highlighted
   - One-click mode changes
 
@@ -30,7 +28,7 @@ A custom Web Component that displays:
   - "Recent Actions" header (click to expand/collapse)
   - Last 10 actions with timestamps
   - Collapsed by default
-  - Shows mode changes, preset changes, temperature adjustments
+  - Shows mode changes and preset changes
 
 ### 2. Action History Tracking
 **Modified:** `climate.py`
@@ -42,8 +40,7 @@ Added features:
 
 Actions logged:
 - HVAC mode changes (HEAT/OFF)
-- Preset mode changes (AWAY/PRESENT/COSY)
-- Manual temperature adjustments
+- Preset mode changes (AWAY/PRESENT/COSY/OFF)
 - Control mode transitions (binary_heat/proportional/binary_cool)
 
 ### 3. Resource Registration
@@ -124,16 +121,15 @@ entity: climate.living_room
 ## Card Sections Explained
 
 ### Temperature Display
-Shows current and target temperature with quick adjustment buttons:
+Shows current and target temperature:
 ```
-  21.5°C          [+ 0.5°]
-Target: 21.0°C    [- 0.5°]
-                  [ ON ]
+  21.5°C
+Target: 21.0°C
 ```
 
 ### Preset Buttons
 ```
-[ AWAY ]  [ PRESENT ]  [ COSY ]
+[ AWAY ]  [ PRESENT ]  [ COSY ]  [ OFF ]
   (active preset is highlighted)
 ```
 

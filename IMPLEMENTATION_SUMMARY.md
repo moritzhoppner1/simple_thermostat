@@ -24,19 +24,19 @@ simple_thermostat/
 
 ### ✅ Hybrid Control Strategy
 
-**Binary Mode (error > 0.5°C):**
+**Binary Mode (error > binary_threshold):**
 - Valve: 100% or 0%
 - TRV Target: 30°C (heat) or 5°C (cool)
 - Fast heating with full power
 
-**Proportional Mode (error ±0.5°C):**
+**Proportional Mode (error ±binary_threshold):**
 - TRV Target: Calculated from external sensor
 - Formula: `(room_target - external_temp) + trv_internal_temp`
 - Smooth temperature maintenance
 
 **Implementation:** `climate.py:460-530`
 
-### ✅ Three Preset Modes
+### ✅ Four Preset Modes
 
 - AWAY: Lower temperature
 - PRESENT: Normal temperature
@@ -175,10 +175,10 @@ Add configuration from `configuration.yaml.example` to your `configuration.yaml`
 4. **Check:** Valve position controlled by TRV (not 100%)
 
 **Phase 3: At Target**
-1. Room reaches 21°C ±0.5°C
+1. Room reaches 21°C (within binary_threshold)
 2. **Expected:** Remains in proportional mode
 3. **Expected:** TRV modulates valve to maintain temp
-4. **Check:** Temperature stable within ±0.3°C
+4. **Check:** Temperature stable
 
 **Phase 4: Overshoot**
 1. Manually increase room temp to 21.6°C
@@ -280,7 +280,7 @@ After 24 hours of operation, you should see:
 | Metric | Better Thermostat | Simple Thermostat |
 |--------|-------------------|-------------------|
 | **Cold Start (18→21°C)** | 45+ min (intermediate temps) | 20-30 min (100% valve) |
-| **Temperature Stability** | ±0.5°C | ±0.3°C |
+| **Temperature Stability** | Varies | Configurable via binary_threshold |
 | **Max Valve Opening** | ~60% (algorithms limit) | 100% (binary mode) |
 | **Temp Overshoot** | Rare but possible | Prevented by threshold |
 | **Configuration Time** | 15-30 min (complex UI) | 5 min (simple YAML) |

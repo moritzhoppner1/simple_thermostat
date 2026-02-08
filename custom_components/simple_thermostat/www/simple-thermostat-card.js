@@ -291,7 +291,6 @@ class SimpleThermostatCard extends HTMLElement {
   _updateThermostat(entity) {
     const currentTemp = entity.attributes.current_temperature;
     const targetTemp = entity.attributes.temperature;
-    const hvacMode = entity.state;
 
     const thermostatSection = this.shadowRoot.getElementById('thermostat');
     thermostatSection.innerHTML = `
@@ -299,19 +298,7 @@ class SimpleThermostatCard extends HTMLElement {
         <div class="temperature-display">${currentTemp !== undefined ? currentTemp.toFixed(1) : '--'}°C</div>
         <div class="target-temp">Target: ${targetTemp !== undefined ? targetTemp.toFixed(1) : '--'}°C</div>
       </div>
-      <div class="controls">
-        <button class="button" data-action="temp-up">+ 0.5°</button>
-        <button class="button" data-action="temp-down">- 0.5°</button>
-        <button class="button ${hvacMode === 'heat' ? 'active' : ''}" data-action="toggle">
-          ${hvacMode === 'heat' ? 'ON' : 'OFF'}
-        </button>
-      </div>
     `;
-
-    // Add event listeners
-    thermostatSection.querySelectorAll('button').forEach(btn => {
-      btn.addEventListener('click', (e) => this._handleAction(e, entity));
-    });
   }
 
   _updatePresets(entity) {
@@ -381,42 +368,11 @@ class SimpleThermostatCard extends HTMLElement {
     }).join('');
   }
 
-  _handleAction(event, entity) {
-    const action = event.target.dataset.action;
-    const currentTemp = entity.attributes.temperature;
-
-    switch (action) {
-      case 'temp-up':
-        this._setTemperature(currentTemp + 0.5);
-        break;
-      case 'temp-down':
-        this._setTemperature(currentTemp - 0.5);
-        break;
-      case 'toggle':
-        this._toggleHvac(entity.state);
-        break;
-    }
-  }
-
-  _setTemperature(temperature) {
-    this._hass.callService('climate', 'set_temperature', {
-      entity_id: this._config.entity,
-      temperature: temperature
-    });
-  }
 
   _setPreset(preset) {
     this._hass.callService('climate', 'set_preset_mode', {
       entity_id: this._config.entity,
       preset_mode: preset
-    });
-  }
-
-  _toggleHvac(currentMode) {
-    const newMode = currentMode === 'heat' ? 'off' : 'heat';
-    this._hass.callService('climate', 'set_hvac_mode', {
-      entity_id: this._config.entity,
-      hvac_mode: newMode
     });
   }
 

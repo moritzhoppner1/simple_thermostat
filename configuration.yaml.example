@@ -18,7 +18,7 @@ climate:
     cosy_temp: 23.0       # Extra warm
 
     # Control thresholds
-    binary_threshold: 0.5   # Use binary control when >0.5°C from target
+    binary_threshold: 0.5   # Use binary control when error exceeds this threshold
     hysteresis: 0.3         # Prevent rapid cycling in binary mode
 
     # Remote temperature sync (send external temp to TRV every 25 min)
@@ -91,14 +91,14 @@ climate:
 # ============================================
 
 # Control Modes:
-# 1. BINARY HEAT (error > 0.5°C): valve=100%, TRV temp=30°C
-# 2. PROPORTIONAL (error ±0.5°C): TRV calculates valve based on temp setpoint
-# 3. BINARY COOL (error < -0.5°C): valve=0%, TRV temp=5°C
+# 1. BINARY HEAT (error > binary_threshold): valve=100%, TRV temp=30°C
+# 2. PROPORTIONAL (error ±binary_threshold): TRV calculates valve based on temp setpoint
+# 3. BINARY COOL (error < -binary_threshold): valve=0%, TRV temp=5°C
 
 # Preset Temperatures:
 # - Change via UI or service: climate.set_preset_mode
 # - Manually setting temperature clears preset
-# - Presets: away, present, cosy
+# - Presets: away, present, cosy, off
 
 # Entity Naming:
 # For thermostat named "Living Room", creates:
