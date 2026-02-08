@@ -446,18 +446,15 @@ class SimpleThermostatCard extends HTMLElement {
     const heatingEntity = this._hass.states[`binary_sensor.${baseName}_heating`];
     const isHeating = heatingEntity ? heatingEntity.state === 'on' : false;
 
-    // Get TRV internal temperature
-    const trvTempSensors = [
-      `sensor.${baseName}_hauptventil_internal_temp`,
-      `sensor.${baseName}_trv_internal_temp`,
-      `sensor.${baseName}_trv_1_internal_temp`
-    ];
+    // Get TRV internal temperature - find dynamically
+    const trvTempPattern = new RegExp(`^sensor\\.${baseName.replace('.', '\\.')}_.*_internal_temp$`);
+    const trvTempSensors = Object.keys(this._hass.states).filter(id => trvTempPattern.test(id));
     let trvTemp = null;
-    for (const sensor of trvTempSensors) {
-      const state = this._hass.states[sensor];
+
+    if (trvTempSensors.length > 0) {
+      const state = this._hass.states[trvTempSensors[0]];
       if (state && state.state !== 'unavailable') {
         trvTemp = parseFloat(state.state);
-        break;
       }
     }
 
