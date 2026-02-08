@@ -60,6 +60,13 @@ class SimpleThermostatCard extends HTMLElement {
         font-weight: 400;
       }
 
+      .trv-temp {
+        font-size: 14px;
+        color: var(--secondary-text-color, #888);
+        margin-top: 4px;
+        font-weight: 300;
+      }
+
       .controls {
         display: flex;
         flex-direction: column;
@@ -176,13 +183,13 @@ class SimpleThermostatCard extends HTMLElement {
         gap: 12px;
       }
 
-      .logs-section {
+      .details-section {
         margin-top: 16px;
         border-top: 1px solid var(--divider-color);
         padding-top: 16px;
       }
 
-      .logs-header {
+      .details-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -191,19 +198,19 @@ class SimpleThermostatCard extends HTMLElement {
         margin-bottom: 8px;
       }
 
-      .logs-header:hover {
+      .details-header:hover {
         background: var(--secondary-background-color);
         border-radius: 4px;
       }
 
-      .logs-content {
+      .details-content {
         max-height: 0;
         overflow: hidden;
         transition: max-height 0.3s ease;
       }
 
-      .logs-content.expanded {
-        max-height: 300px;
+      .details-content.expanded {
+        max-height: 1000px;
         overflow-y: auto;
       }
 
@@ -353,29 +360,31 @@ class SimpleThermostatCard extends HTMLElement {
       <div class="card-content">
         <div class="thermostat-section" id="thermostat"></div>
         <div class="preset-buttons" id="presets"></div>
-        <div class="status-section" id="status"></div>
-        <div class="sliders-section" id="sliders"></div>
-        <div class="chart-section" id="chart"></div>
-        <div class="logs-section">
-          <div class="logs-header" id="logs-toggle">
-            <span><strong>Recent Actions</strong></span>
-            <span id="logs-icon">▼</span>
+        <div class="details-section">
+          <div class="details-header" id="details-toggle">
+            <span><strong>Details</strong></span>
+            <span id="details-icon">▼</span>
           </div>
-          <div class="logs-content" id="logs-content"></div>
+          <div class="details-content" id="details-content">
+            <div id="status"></div>
+            <div id="sliders"></div>
+            <div id="chart"></div>
+            <div id="logs"></div>
+          </div>
         </div>
       </div>
     `;
 
     this.shadowRoot.appendChild(card);
 
-    // Add logs toggle functionality
-    const logsToggle = this.shadowRoot.getElementById('logs-toggle');
-    const logsContent = this.shadowRoot.getElementById('logs-content');
-    const logsIcon = this.shadowRoot.getElementById('logs-icon');
+    // Add details toggle functionality
+    const detailsToggle = this.shadowRoot.getElementById('details-toggle');
+    const detailsContent = this.shadowRoot.getElementById('details-content');
+    const detailsIcon = this.shadowRoot.getElementById('details-icon');
 
-    logsToggle.addEventListener('click', () => {
-      logsContent.classList.toggle('expanded');
-      logsIcon.textContent = logsContent.classList.contains('expanded') ? '▲' : '▼';
+    detailsToggle.addEventListener('click', () => {
+      detailsContent.classList.toggle('expanded');
+      detailsIcon.textContent = detailsContent.classList.contains('expanded') ? '▲' : '▼';
     });
   }
 
@@ -423,11 +432,27 @@ class SimpleThermostatCard extends HTMLElement {
     const heatingEntity = this._hass.states[`binary_sensor.${baseName}_heating`];
     const isHeating = heatingEntity ? heatingEntity.state === 'on' : false;
 
+    // Get TRV internal temperature
+    const trvTempSensors = [
+      `sensor.${baseName}_hauptventil_internal_temp`,
+      `sensor.${baseName}_trv_internal_temp`,
+      `sensor.${baseName}_trv_1_internal_temp`
+    ];
+    let trvTemp = null;
+    for (const sensor of trvTempSensors) {
+      const state = this._hass.states[sensor];
+      if (state && state.state !== 'unavailable') {
+        trvTemp = parseFloat(state.state);
+        break;
+      }
+    }
+
     const thermostatSection = this.shadowRoot.getElementById('thermostat');
     thermostatSection.innerHTML = `
       <div>
         <div class="temperature-display">${currentTemp != null ? currentTemp.toFixed(1) : '--'}°C</div>
         <div class="target-temp">Target: ${targetTemp != null ? targetTemp.toFixed(1) : '--'}°C ${isHeating ? '🔥' : ''}</div>
+        <div class="trv-temp">TRV: ${trvTemp != null ? trvTemp.toFixed(1) : '--'}°C</div>
       </div>
     `;
   }
@@ -582,24 +607,29 @@ class SimpleThermostatCard extends HTMLElement {
   }
 
   _updateLogs(entity) {
-    const logsContent = this.shadowRoot.getElementById('logs-content');
+    const logsSection = this.shadowRoot.getElementById('logs');
     const actionHistory = entity.attributes.action_history || [];
 
     if (actionHistory.length === 0) {
-      logsContent.innerHTML = '<div class="log-entry">No recent actions</div>';
+      logsSection.innerHTML = '<div style="padding: 8px; color: var(--secondary-text-color);">No recent actions</div>';
       return;
     }
 
-    logsContent.innerHTML = actionHistory.slice(-10).reverse().map(action => {
-      const time = action.time || '';
-      const message = action.message || action;
-      return `
-        <div class="log-entry">
-          <span class="log-time">${time}</span>
-          <span>${message}</span>
-        </div>
-      `;
-    }).join('');
+    logsSection.innerHTML = `
+      <div style="margin-top: 16px; border-top: 1px solid var(--divider-color); padding-top: 16px;">
+        <div style="font-weight: 600; margin-bottom: 8px;">Recent Actions</div>
+        ${actionHistory.slice(-10).reverse().map(action => {
+          const time = action.time || '';
+          const message = action.message || action;
+          return `
+            <div class="log-entry">
+              <span class="log-time">${time}</span>
+              <span>${message}</span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
   }
 
 
