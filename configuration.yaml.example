@@ -1,0 +1,117 @@
+# Example configuration for Simple Thermostat
+# Add this to your Home Assistant configuration.yaml
+
+climate:
+  # Living Room Example - Single TRV
+  - platform: simple_thermostat
+    name: "Living Room"
+    unique_id: "living_room_thermostat"
+
+    # External temperature sensor (room sensor, NOT TRV's internal)
+    temperature_sensor: sensor.living_room_temperature
+
+    # TRV valve position entities (pi_heating_demand)
+    valve_entities:
+      - number.living_room_trv_pi_heating_demand
+
+    # TRV climate entities (for temperature control)
+    climate_entities:
+      - climate.living_room_trv
+
+    # Preset temperatures (°C)
+    away_temp: 18.0       # When away from home
+    present_temp: 21.0    # Normal comfortable temperature
+    cosy_temp: 23.0       # Extra warm
+
+    # Control thresholds
+    binary_threshold: 0.5   # Use binary control when >0.5°C from target
+    hysteresis: 0.3         # Prevent rapid cycling in binary mode
+
+    # Remote temperature sync (send external temp to TRV every 25 min)
+    sync_remote_temp: true
+
+    # Initial preset on startup
+    initial_preset: present
+
+  # Kitchen Example - Multiple TRVs in one room
+  - platform: simple_thermostat
+    name: "Kitchen"
+    unique_id: "kitchen_thermostat"
+
+    # One external sensor for the whole room
+    temperature_sensor: sensor.kitchen_temperature
+
+    # Multiple TRV valve entities (all controlled together)
+    valve_entities:
+      - number.kitchen_trv_1_pi_heating_demand
+      - number.kitchen_trv_2_pi_heating_demand
+
+    # Multiple TRV climate entities
+    climate_entities:
+      - climate.kitchen_trv_1
+      - climate.kitchen_trv_2
+
+    # Preset temperatures
+    away_temp: 16.0
+    present_temp: 20.0
+    cosy_temp: 22.0
+
+    # Control thresholds (defaults shown)
+    binary_threshold: 0.5
+    hysteresis: 0.3
+
+    sync_remote_temp: true
+    initial_preset: present
+
+  # Bedroom Example - Lower temperatures
+  - platform: simple_thermostat
+    name: "Bedroom"
+    unique_id: "bedroom_thermostat"
+
+    temperature_sensor: sensor.bedroom_temperature
+
+    valve_entities:
+      - number.bedroom_trv_pi_heating_demand
+
+    climate_entities:
+      - climate.bedroom_trv
+
+    # Cooler preset temperatures for sleeping
+    away_temp: 16.0
+    present_temp: 18.0
+    cosy_temp: 20.0
+
+    binary_threshold: 0.5
+    hysteresis: 0.3
+    sync_remote_temp: true
+    initial_preset: present
+
+# ============================================
+# NOTES
+# ============================================
+
+# Control Modes:
+# 1. BINARY HEAT (error > 0.5°C): valve=100%, TRV temp=30°C
+# 2. PROPORTIONAL (error ±0.5°C): TRV calculates valve based on temp setpoint
+# 3. BINARY COOL (error < -0.5°C): valve=0%, TRV temp=5°C
+
+# Preset Temperatures:
+# - Change via UI or service: climate.set_preset_mode
+# - Manually setting temperature clears preset
+# - Presets: away, present, cosy
+
+# Entity Naming:
+# For thermostat named "Living Room", creates:
+#   - climate.living_room
+#   - sensor.living_room_control_mode
+#   - sensor.living_room_temperature_error
+#   - binary_sensor.living_room_heating
+#   - sensor.living_room_trv_1_internal_temp
+#   - sensor.living_room_trv_1_target_temp
+#   - binary_sensor.living_room_trv_1_heating
+#   (and per-TRV sensors for each additional TRV)
+
+# Requirements:
+# - Bosch BTH-RA TRVs connected via Zigbee2MQTT
+# - External temperature sensor in each room
+# - MQTT integration configured in Home Assistant

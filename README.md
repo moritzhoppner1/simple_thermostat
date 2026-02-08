@@ -1,0 +1,423 @@
+# Simple Thermostat
+
+A simple, effective Home Assistant thermostat integration for Bosch BTH-RA TRVs with **hybrid binary + proportional control**.
+
+## Why Simple Thermostat?
+
+**Problem with Better Thermostat:** Complex algorithms (PID/MPC/TPI) calculate intermediate temperatures that prevent valves from opening fully, resulting in "always set to low temperatures and heater never on full power."
+
+**Solution:** Simple Thermostat uses a hybrid approach:
+- **Binary control** (0% or 100%) when far from target → Fast heating with full power
+- **Proportional control** when near target (±0.5°C) → Smooth temperature maintenance
+- **No complex algorithms** → Simple, predictable, debuggable
+
+## Features
+
+✅ **Hybrid Control Strategy**
+- Binary 100% valve when >0.5°C below target
+- Proportional TRV control when within ±0.5°C of target
+- Binary 0% valve when >0.5°C above target
+
+✅ **Multi-TRV Support**
+- Control multiple TRVs as one thermostat
+- All valves synchronized
+
+✅ **Three Preset Modes**
+- AWAY: Lower temperature when away
+- PRESENT: Normal comfortable temperature
+- COSY: Extra warm temperature
+
+✅ **External Temperature Sensor**
+- Uses accurate room sensor, not TRV's internal sensor
+- Optionally syncs external temp to TRV every 25 minutes
+
+✅ **Diagnostic Sensors for Graphs**
+- Control mode sensor (binary_heat/proportional/binary_cool)
+- Temperature error sensor
+- Per-TRV internal temp, target temp, heating status
+- Perfect for ApexCharts visualization
+
+✅ **Simple Configuration**
+- YAML-only configuration
+- No complex UI config flow
+- ~300 lines of code vs 4000+ in Better Thermostat
+
+## Requirements
+
+- Home Assistant
+- Bosch BTH-RA TRVs connected via Zigbee2MQTT
+- External temperature sensor in each room
+- MQTT integration configured
+
+## Installation
+
+### Quick Install (One-Liner)
+
+**Install directly from GitHub:**
+
+```bash
+bash <(curl -sSL https://raw.githubusercontent.com/YOUR_USERNAME/simple_thermostat/main/install.sh)
+```
+
+*Note: Replace `YOUR_USERNAME` with your GitHub username once published.*
+
+Or specify custom Home Assistant directory:
+```bash
+HA_CONFIG_DIR=/home/homeassistant/.homeassistant bash <(curl -sSL https://raw.githubusercontent.com/YOUR_USERNAME/simple_thermostat/main/install.sh)
+```
+
+### Method 1: Git Clone (Manual)
+
+**Directly clone into your Home Assistant config:**
+
+```bash
+cd /config/custom_components
+git clone https://github.com/YOUR_USERNAME/simple_thermostat.git
+cd simple_thermostat
+# Copy just the integration files
+cp -r custom_components/simple_thermostat /config/custom_components/
+cd ..
+rm -rf simple_thermostat  # Remove the cloned repo folder
+```
+
+**Or keep as submodule for easy updates:**
+
+```bash
+cd /config
+git submodule add https://github.com/YOUR_USERNAME/simple_thermostat.git custom_components/simple_thermostat
+cd custom_components/simple_thermostat
+# Use the integration directly from the submodule
+```
+
+### Method 2: Download from GitHub
+
+1. Go to: `https://github.com/YOUR_USERNAME/simple_thermostat`
+2. Click **Code → Download ZIP**
+3. Extract the ZIP file
+4. Copy `simple_thermostat/custom_components/simple_thermostat/` to `/config/custom_components/`
+
+### Method 3: Manual Copy
+
+If you already have the files locally:
+
+```bash
+cp -r /path/to/simple_thermostat/custom_components/simple_thermostat /config/custom_components/
+```
+
+### Post-Installation Steps (All Methods)
+
+1. **Restart Home Assistant**
+
+2. **Enable Custom Card (Optional):**
+   - Go to **Settings → Dashboards → Resources**
+   - Click **Add Resource**
+   - URL: `/simple_thermostat/simple-thermostat-card.js`
+   - Type: **JavaScript Module**
+
+3. **Verify Installation:**
+   - Check logs for: `"Registered Simple Thermostat card"`
+   - Go to **Developer Tools → States**
+   - Look for your configured climate entities
+
+## Configuration
+
+Add to your `configuration.yaml`:
+
+```yaml
+climate:
+  - platform: simple_thermostat
+    name: "Living Room"
+    unique_id: "living_room_thermostat"
+
+    # External temperature sensor
+    temperature_sensor: sensor.living_room_temperature
+
+    # TRV valve position entities
+    valve_entities:
+      - number.living_room_trv_pi_heating_demand
+
+    # TRV climate entities
+    climate_entities:
+      - climate.living_room_trv
+
+    # Preset temperatures (°C)
+    away_temp: 18.0
+    present_temp: 21.0
+    cosy_temp: 23.0
+
+    # Control thresholds
+    binary_threshold: 0.5
+    hysteresis: 0.3
+
+    # Remote temperature sync
+    sync_remote_temp: true
+
+    # Initial preset
+    initial_preset: present
+```
+
+### Configuration Options
+
+| Option | Required | Default | Description |
+|--------|----------|---------|-------------|
+| `name` | Yes | - | Thermostat name |
+| `temperature_sensor` | Yes | - | External room temperature sensor |
+| `valve_entities` | Yes | - | List of TRV valve position entities |
+| `climate_entities` | Yes | - | List of TRV climate entities |
+| `away_temp` | Yes | - | AWAY preset temperature (°C) |
+| `present_temp` | Yes | - | PRESENT preset temperature (°C) |
+| `cosy_temp` | Yes | - | COSY preset temperature (°C) |
+| `binary_threshold` | No | 0.5 | Use binary control when error > threshold |
+| `hysteresis` | No | 0.3 | Prevent rapid cycling |
+| `sync_remote_temp` | No | true | Send external temp to TRV every 25min |
+| `initial_preset` | No | present | Initial preset mode on startup |
+| `unique_id` | No | - | Unique ID for entity |
+
+## How It Works
+
+### Control Zones
+
+```
+Temperature Error (target - current):
+
+> +0.5°C  →  BINARY HEAT MODE
+              - Valve: 100% (fully open)
+              - TRV Target: 30°C (max)
+              - Result: Fast heating with full power
+
+±0.5°C    →  PROPORTIONAL MODE
+              - TRV Target: Calculated from external sensor
+              - Valve: Controlled by TRV
+              - Result: Smooth temperature control
+
+< -0.5°C  →  BINARY COOL MODE
+              - Valve: 0% (closed)
+              - TRV Target: 5°C (min)
+              - Result: Heating stopped
+```
+
+### Proportional Mode Calculation
+
+When within ±0.5°C of target:
+
+```python
+TRV_target = (room_target - external_temp) + trv_internal_temp
+```
+
+**Example:**
+- Want room at 21°C
+- External sensor reads 20.7°C
+- TRV internal sensor reads 22°C
+- **TRV target = (21 - 20.7) + 22 = 22.3°C**
+
+The TRV will modulate the valve to bring its sensor from 22°C to 22.3°C, which brings the room from 20.7°C to 21°C.
+
+## Entities Created
+
+For a thermostat named "Living Room" with 2 TRVs:
+
+### Main Climate Entity
+- `climate.living_room`
+
+### Diagnostic Sensors
+- `sensor.living_room_control_mode`
+- `sensor.living_room_temperature_error`
+- `binary_sensor.living_room_heating`
+
+### Per-TRV Sensors
+- `sensor.living_room_trv_1_internal_temp`
+- `sensor.living_room_trv_1_target_temp`
+- `binary_sensor.living_room_trv_1_heating`
+- `sensor.living_room_trv_2_internal_temp`
+- `sensor.living_room_trv_2_target_temp`
+- `binary_sensor.living_room_trv_2_heating`
+
+## Usage
+
+### Custom Card (All-in-One - Recommended!)
+
+The integration includes a custom card that shows **everything in one place**:
+- Thermostat control with preset buttons
+- Current status (control mode, temperature error, heating status)
+- Collapsible action history logs (hidden by default)
+
+**Step 1: Add Resource (ONE TIME SETUP)**
+
+Go to: **Settings → Dashboards → Resources** (top right menu) and add:
+
+```
+URL: /simple_thermostat/simple-thermostat-card.js
+Type: JavaScript Module
+```
+
+**Step 2: Use the Card**
+
+Add to your dashboard (one line per thermostat!):
+
+```yaml
+type: custom:simple-thermostat-card
+entity: climate.living_room
+```
+
+That's it! The card automatically:
+- Finds all related sensors
+- Shows temperature control with +/- buttons
+- Displays preset mode buttons (AWAY/PRESENT/COSY)
+- Shows control mode, temperature error, heating status
+- Includes collapsible logs (click "Recent Actions" to expand)
+
+### Via Standard UI Card
+
+You can also use the standard Home Assistant thermostat card:
+
+```yaml
+type: thermostat
+entity: climate.living_room
+```
+
+### Via Service Calls
+
+**Set preset mode:**
+```yaml
+service: climate.set_preset_mode
+target:
+  entity_id: climate.living_room
+data:
+  preset_mode: cosy
+```
+
+**Set temperature (clears preset):**
+```yaml
+service: climate.set_temperature
+target:
+  entity_id: climate.living_room
+data:
+  temperature: 22.5
+```
+
+**Turn on/off:**
+```yaml
+service: climate.set_hvac_mode
+target:
+  entity_id: climate.living_room
+data:
+  hvac_mode: heat  # or 'off'
+```
+
+## Visualization
+
+See `apexcharts-card.yaml.example` for detailed graph configurations.
+
+### Basic Graph
+
+```yaml
+type: custom:apexcharts-card
+header:
+  title: Living Room Heating
+graph_span: 24h
+series:
+  - entity: sensor.living_room_temperature
+    name: Room Temp
+  - entity: climate.living_room
+    attribute: temperature
+    name: Target
+  - entity: number.living_room_trv_pi_heating_demand
+    name: Valve Position
+    yaxis_id: percent
+```
+
+## Troubleshooting
+
+### TRVs not responding
+
+**Check MQTT topics:**
+```bash
+mosquitto_sub -h localhost -t 'zigbee2mqtt/#' -v
+```
+
+**Verify entity IDs:**
+- Valve entities should be `number.*_pi_heating_demand`
+- Climate entities should be `climate.*`
+
+### Temperature not updating
+
+**Check external sensor:**
+```yaml
+# In Developer Tools > States
+sensor.living_room_temperature
+```
+
+Should show current temperature, not "unavailable"
+
+### Valve always at 0% or 100%
+
+**Check binary threshold:**
+- Default 0.5°C may be too large/small for your room
+- Adjust `binary_threshold` in configuration
+- Monitor `sensor.living_room_temperature_error`
+
+### Remote temperature not syncing
+
+**Check MQTT entity naming:**
+- Integration assumes Zigbee2MQTT naming: `zigbee2mqtt/FRIENDLY_NAME/set`
+- Friendly name derived from climate entity ID
+- Example: `climate.living_room_trv` → `zigbee2mqtt/living room trv/set`
+
+**Manual test:**
+```bash
+mosquitto_pub -t 'zigbee2mqtt/living room trv/set' \
+              -m '{"remote_temperature": 21.5}'
+```
+
+## Debugging
+
+Enable debug logging in `configuration.yaml`:
+
+```yaml
+logger:
+  default: info
+  logs:
+    custom_components.simple_thermostat: debug
+```
+
+Watch logs:
+```bash
+tail -f /config/home-assistant.log | grep simple_thermostat
+```
+
+## Comparison with Other Thermostats
+
+| Feature | Simple Thermostat | Better Thermostat | Awesome Thermostat |
+|---------|-------------------|-------------------|-------------------|
+| **Lines of Code** | ~400 | ~4000+ | ~676 |
+| **Control Strategy** | Hybrid binary+proportional | Complex algorithms | Binary only |
+| **Full Valve Opening** | ✅ Yes (binary mode) | ❌ No (always intermediate) | ✅ Yes |
+| **Multi-TRV** | ✅ Yes | ✅ Yes | ❌ No |
+| **Valve Position Control** | ✅ Yes | ✅ Yes | ❌ No (switches only) |
+| **External Sensor** | ✅ Yes | ✅ Yes | ✅ Yes |
+| **Preset Modes** | 3 (AWAY/PRESENT/COSY) | Many | 7 |
+| **Configuration** | YAML only | UI + YAML | YAML only |
+| **Complexity** | Low | Very High | Low |
+| **Diagnostic Sensors** | ✅ Yes | ✅ Yes | ❌ No |
+
+## Examples
+
+See:
+- `configuration.yaml.example` - Full configuration examples
+- `apexcharts-card.yaml.example` - Graph configurations
+
+## Contributing
+
+This is a private project for personal use. Feel free to fork and modify for your needs.
+
+## License
+
+MIT License - See LICENSE file
+
+## Credits
+
+Inspired by:
+- [Awesome Thermostat](https://github.com/dadge/awesome_thermostat) - Simple binary control approach
+- [Better Thermostat](https://github.com/KartoffelToby/better_thermostat) - Advanced features and multi-TRV support
+
+Built specifically for Bosch BTH-RA TRVs based on analysis in the parent project's README.

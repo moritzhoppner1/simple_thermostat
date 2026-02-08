@@ -1,0 +1,178 @@
+# Dashboard Example for Simple Thermostat Custom Card
+#
+# This shows how to use the custom card in your Lovelace dashboard
+#
+# SETUP REQUIRED:
+# 1. Go to Settings → Dashboards → Resources
+# 2. Add Resource:
+#    URL: /simple_thermostat/simple-thermostat-card.js
+#    Type: JavaScript Module
+#
+# Then use the card configurations below in your dashboard
+
+# ============================================
+# Single Line Per Thermostat
+# ============================================
+
+# Living Room Example
+- type: custom:simple-thermostat-card
+  entity: climate.living_room
+
+# Kitchen Example
+- type: custom:simple-thermostat-card
+  entity: climate.kitchen
+
+# Bedroom Example
+- type: custom:simple-thermostat-card
+  entity: climate.bedroom
+
+# ============================================
+# Full Dashboard Layout Example
+# ============================================
+
+# Complete view with multiple rooms
+title: Heating Control
+views:
+  - title: All Rooms
+    cards:
+      # Living Room
+      - type: custom:simple-thermostat-card
+        entity: climate.living_room
+
+      # Kitchen
+      - type: custom:simple-thermostat-card
+        entity: climate.kitchen
+
+      # Bedroom
+      - type: custom:simple-thermostat-card
+        entity: climate.bedroom
+
+      # Bathroom
+      - type: custom:simple-thermostat-card
+        entity: climate.bathroom
+
+# ============================================
+# Multi-Column Layout Example
+# ============================================
+
+views:
+  - title: Heating
+    cards:
+      - type: horizontal-stack
+        cards:
+          - type: custom:simple-thermostat-card
+            entity: climate.living_room
+          - type: custom:simple-thermostat-card
+            entity: climate.kitchen
+
+      - type: horizontal-stack
+        cards:
+          - type: custom:simple-thermostat-card
+            entity: climate.bedroom
+          - type: custom:simple-thermostat-card
+            entity: climate.bathroom
+
+# ============================================
+# With Additional Info Cards
+# ============================================
+
+views:
+  - title: Living Room Details
+    cards:
+      # Main thermostat card with logs
+      - type: custom:simple-thermostat-card
+        entity: climate.living_room
+
+      # Additional detailed sensors (optional)
+      - type: entities
+        title: Detailed TRV Status
+        entities:
+          - entity: sensor.living_room_trv_1_internal_temp
+            name: TRV 1 Internal Temp
+          - entity: sensor.living_room_trv_1_target_temp
+            name: TRV 1 Target
+          - entity: number.living_room_trv_1_pi_heating_demand
+            name: TRV 1 Valve Position
+          - entity: binary_sensor.living_room_trv_1_heating
+            name: TRV 1 Heating
+
+      # ApexCharts graph (if installed)
+      - type: custom:apexcharts-card
+        header:
+          title: 24h History
+        graph_span: 24h
+        series:
+          - entity: sensor.living_room_temperature
+            name: Room Temp
+          - entity: climate.living_room
+            attribute: temperature
+            name: Target
+          - entity: number.living_room_trv_1_pi_heating_demand
+            name: Valve
+            yaxis_id: percent
+        yaxis:
+          - id: temp
+          - id: percent
+            opposite: true
+            max: 100
+
+# ============================================
+# What the Custom Card Shows
+# ============================================
+#
+# The custom:simple-thermostat-card includes:
+#
+# 1. TEMPERATURE CONTROL
+#    - Large current temperature display
+#    - Target temperature display
+#    - +0.5° and -0.5° buttons
+#    - ON/OFF toggle button
+#
+# 2. PRESET BUTTONS
+#    - AWAY / PRESENT / COSY buttons
+#    - Current preset highlighted
+#    - One-click preset changes
+#
+# 3. STATUS SECTION
+#    - Control Mode badge (binary_heat/proportional/binary_cool)
+#    - Temperature Error (how far from target)
+#    - Heating Status (🔥 HEATING or OFF)
+#
+# 4. LOGS SECTION (Collapsible)
+#    - Recent Actions header (click to expand/collapse)
+#    - Last 10 control actions with timestamps
+#    - Collapsed by default to save space
+#
+# ============================================
+# Features
+# ============================================
+#
+# ✅ Auto-discovers all related sensors
+# ✅ Works with multi-TRV setups
+# ✅ No manual sensor configuration needed
+# ✅ Responsive design (mobile-friendly)
+# ✅ Real-time updates
+# ✅ Collapsible logs (saves space)
+# ✅ One line of config per thermostat!
+#
+# ============================================
+# Troubleshooting
+# ============================================
+#
+# Card not showing?
+# 1. Check resource is added: Settings → Dashboards → Resources
+# 2. URL must be exact: /simple_thermostat/simple-thermostat-card.js
+# 3. Type must be: JavaScript Module
+# 4. Hard refresh browser: Ctrl+Shift+R (Windows) or Cmd+Shift+R (Mac)
+# 5. Check browser console for errors (F12)
+#
+# Sensors not showing?
+# 1. Make sure integration is configured in configuration.yaml
+# 2. Restart Home Assistant after config changes
+# 3. Check entity names match (climate.living_room not climate.livingroom)
+# 4. Check Developer Tools → States for sensor entities
+#
+# Logs not showing?
+# 1. Wait for first control action (mode change, preset change, etc.)
+# 2. Click "Recent Actions" header to expand logs section
+# 3. Check entity attributes: climate.living_room → action_history

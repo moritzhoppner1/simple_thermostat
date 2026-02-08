@@ -1,0 +1,299 @@
+# Example ApexCharts Card for Simple Thermostat
+# Requires: custom:apexcharts-card from HACS
+# https://github.com/RomRider/apexcharts-card
+
+# ============================================
+# Single TRV Example (Living Room)
+# ============================================
+
+type: custom:apexcharts-card
+header:
+  show: true
+  title: Living Room - Heating
+  show_states: true
+  colorize_states: true
+graph_span: 24h
+hours_12: false
+
+yaxis:
+  - id: temp
+    min: 15
+    max: 30
+    decimals: 1
+    apex_config:
+      title:
+        text: °C
+  - id: percent
+    min: 0
+    max: 100
+    decimals: 0
+    opposite: true
+    apex_config:
+      title:
+        text: "%"
+  - id: status
+    min: 0
+    max: 1
+    show: false
+    opposite: true
+
+series:
+  # External room temperature (main control sensor)
+  - entity: sensor.living_room_temperature
+    name: Room Temperature
+    color: "#4CAF50"
+    stroke_width: 3
+    yaxis_id: temp
+
+  # Target temperature from thermostat
+  - entity: climate.living_room
+    attribute: temperature
+    name: Target Temperature
+    color: "#9C27B0"
+    stroke_width: 2
+    curve: stepline
+    yaxis_id: temp
+    opacity: 0.7
+
+  # TRV internal sensor
+  - entity: sensor.living_room_trv_1_internal_temp
+    name: TRV Internal
+    color: "#FF9800"
+    stroke_width: 1
+    yaxis_id: temp
+    opacity: 0.5
+
+  # Temperature sent to TRV
+  - entity: sensor.living_room_trv_1_target_temp
+    name: TRV Target
+    color: "#FFC107"
+    stroke_width: 1
+    curve: stepline
+    yaxis_id: temp
+    opacity: 0.4
+
+  # Valve position
+  - entity: number.living_room_trv_pi_heating_demand
+    name: Valve Position
+    color: "#FF5722"
+    stroke_width: 2
+    curve: stepline
+    yaxis_id: percent
+
+  # Heating status indicator
+  - entity: binary_sensor.living_room_heating
+    name: Heating Active
+    color: "#F44336"
+    type: area
+    curve: stepline
+    stroke_width: 0
+    yaxis_id: status
+    opacity: 0.2
+    transform: "return x === 'on' ? 1 : 0;"
+
+apex_config:
+  chart:
+    height: 400
+  legend:
+    show: true
+    position: bottom
+  tooltip:
+    enabled: true
+    shared: true
+  grid:
+    borderColor: "#333"
+  annotations:
+    yaxis:
+      - y: 0.5
+        borderColor: "#775DD0"
+        opacity: 0.3
+        label:
+          text: "Binary Threshold"
+          style:
+            color: "#fff"
+            background: "#775DD0"
+
+# ============================================
+# Multiple TRVs Example (Kitchen with 2 TRVs)
+# ============================================
+
+---
+type: custom:apexcharts-card
+header:
+  show: true
+  title: Kitchen - Heating (2 TRVs)
+  show_states: true
+  colorize_states: true
+graph_span: 24h
+hours_12: false
+
+yaxis:
+  - id: temp
+    min: 15
+    max: 30
+    decimals: 1
+    apex_config:
+      title:
+        text: °C
+  - id: percent
+    min: 0
+    max: 100
+    decimals: 0
+    opposite: true
+    apex_config:
+      title:
+        text: "%"
+  - id: status
+    min: 0
+    max: 1
+    show: false
+    opposite: true
+
+series:
+  # External room temperature
+  - entity: sensor.kitchen_temperature
+    name: Room Temperature
+    color: "#4CAF50"
+    stroke_width: 3
+    yaxis_id: temp
+
+  # Target temperature
+  - entity: climate.kitchen
+    attribute: temperature
+    name: Target Temperature
+    color: "#9C27B0"
+    stroke_width: 2
+    curve: stepline
+    yaxis_id: temp
+    opacity: 0.7
+
+  # TRV 1 - Internal temperature
+  - entity: sensor.kitchen_trv_1_internal_temp
+    name: TRV 1 Internal
+    color: "#FF9800"
+    stroke_width: 1
+    yaxis_id: temp
+    opacity: 0.5
+
+  # TRV 1 - Target temperature
+  - entity: sensor.kitchen_trv_1_target_temp
+    name: TRV 1 Target
+    color: "#FFC107"
+    stroke_width: 1
+    curve: stepline
+    yaxis_id: temp
+    opacity: 0.4
+
+  # TRV 1 - Valve position
+  - entity: number.kitchen_trv_1_pi_heating_demand
+    name: TRV 1 Valve
+    color: "#FF5722"
+    stroke_width: 2
+    curve: stepline
+    yaxis_id: percent
+
+  # TRV 1 - Heating status
+  - entity: binary_sensor.kitchen_trv_1_heating
+    name: TRV 1 Heating
+    color: "#F44336"
+    type: area
+    curve: stepline
+    stroke_width: 0
+    yaxis_id: status
+    opacity: 0.2
+    transform: "return x === 'on' ? 1 : 0;"
+
+  # TRV 2 - Internal temperature
+  - entity: sensor.kitchen_trv_2_internal_temp
+    name: TRV 2 Internal
+    color: "#00BCD4"
+    stroke_width: 1
+    yaxis_id: temp
+    opacity: 0.5
+
+  # TRV 2 - Target temperature
+  - entity: sensor.kitchen_trv_2_target_temp
+    name: TRV 2 Target
+    color: "#009688"
+    stroke_width: 1
+    curve: stepline
+    yaxis_id: temp
+    opacity: 0.4
+
+  # TRV 2 - Valve position
+  - entity: number.kitchen_trv_2_pi_heating_demand
+    name: TRV 2 Valve
+    color: "#03A9F4"
+    stroke_width: 2
+    curve: stepline
+    yaxis_id: percent
+
+  # TRV 2 - Heating status
+  - entity: binary_sensor.kitchen_trv_2_heating
+    name: TRV 2 Heating
+    color: "#E91E63"
+    type: area
+    curve: stepline
+    stroke_width: 0
+    yaxis_id: status
+    opacity: 0.15
+    transform: "return x === 'on' ? 1 : 0;"
+
+apex_config:
+  chart:
+    height: 450
+  legend:
+    show: true
+    position: bottom
+  tooltip:
+    enabled: true
+    shared: true
+  grid:
+    borderColor: "#333"
+
+# ============================================
+# Compact Dashboard Card Example
+# ============================================
+
+---
+type: vertical-stack
+cards:
+  # Temperature control
+  - type: thermostat
+    entity: climate.living_room
+    name: Living Room
+
+  # Control info
+  - type: entities
+    entities:
+      - entity: sensor.living_room_control_mode
+        name: Control Mode
+        icon: mdi:thermometer-auto
+      - entity: sensor.living_room_temperature_error
+        name: Temp Error
+        icon: mdi:delta
+      - entity: binary_sensor.living_room_heating
+        name: Heating
+        icon: mdi:fire
+
+  # Graph
+  - type: custom:apexcharts-card
+    graph_span: 12h
+    header:
+      show: false
+    series:
+      - entity: sensor.living_room_temperature
+        name: Room
+        stroke_width: 2
+      - entity: climate.living_room
+        attribute: temperature
+        name: Target
+        curve: stepline
+      - entity: number.living_room_trv_pi_heating_demand
+        name: Valve
+        yaxis_id: pct
+    yaxis:
+      - id: temp
+      - id: pct
+        opposite: true
+        max: 100
