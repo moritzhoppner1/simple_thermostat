@@ -24,7 +24,8 @@ scene: !include scenes.yaml
 template: !include_dir_merge_list templates/
 
 # Climate configuration
-climate: !include templates/simple_thermostat.yaml
+# NOTE: Must NOT be in templates/ folder to avoid conflict with template: !include_dir_merge_list
+climate: !include climate/simple_thermostat.yaml
 
 # --- Sensors ---
 sensor:
