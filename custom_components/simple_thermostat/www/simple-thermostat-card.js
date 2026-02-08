@@ -35,6 +35,13 @@ class SimpleThermostatCard extends HTMLElement {
         padding: 16px;
       }
 
+      .card-title {
+        font-size: 20px;
+        font-weight: 500;
+        margin-bottom: 16px;
+        color: var(--primary-text-color, #000);
+      }
+
       .thermostat-section {
         display: flex;
         justify-content: space-between;
@@ -358,6 +365,7 @@ class SimpleThermostatCard extends HTMLElement {
     const card = document.createElement('ha-card');
     card.innerHTML = `
       <div class="card-content">
+        <div class="card-title" id="card-title"></div>
         <div class="thermostat-section" id="thermostat"></div>
         <div class="preset-buttons" id="presets"></div>
         <div class="details-section">
@@ -402,6 +410,12 @@ class SimpleThermostatCard extends HTMLElement {
 
     // Extract base name for finding related sensors
     const baseName = entityId.replace('climate.', '');
+
+    // Update title
+    const titleSection = this.shadowRoot.getElementById('card-title');
+    if (titleSection) {
+      titleSection.textContent = entity.attributes.friendly_name || entityId;
+    }
 
     // Update thermostat section
     this._updateThermostat(entity);

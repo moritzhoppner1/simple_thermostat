@@ -1,0 +1,23 @@
+title: Heizung
+views:
+  - title: Alle Räume
+    path: heizung
+    icon: mdi:radiator
+    panel: true
+    cards:
+      - type: grid
+        columns: 4
+        square: false
+        cards:
+          # ROW 1: Kaminzimmer, Büro Annie, Küche, Fernsehzimmer
+          - type: custom:simple-thermostat-card
+            entity: climate.st_kaminzimmer
+          - type: custom:simple-thermostat-card
+            entity: climate.st_buero_annie
+          - type: custom:simple-thermostat-card
+            entity: climate.st_kueche
+          - type: custom:simple-thermostat-card
+            entity: climate.st_fernsehzimmer
+          # ROW 2: Schlafzimmer
+          - type: custom:simple-thermostat-card
+            entity: climate.st_schlafzimmer

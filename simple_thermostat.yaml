@@ -105,6 +105,8 @@
   trv_ids:
     - id: "0x08b95ffffe50eb0f"
       name: "Küche Ventil"
+    - id: "0x08b95ffffe51826b"
+      name: "Flur Ventil"
 
   # Preset temperatures (°C)
   away_temp: 16.0
