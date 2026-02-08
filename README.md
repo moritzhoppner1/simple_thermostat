@@ -194,6 +194,44 @@ climate:
 | `sync_remote_temp` | No | true | Send external temp to TRV every 25min |
 | `initial_preset` | No | present | Initial preset mode on startup |
 | `unique_id` | No | - | Unique ID for entity |
+| `schedule` | No | - | Time-based schedule (weekday/weekend) |
+| `presence_sensor` | No | - | Binary sensor for room presence detection |
+| `window_sensor` | No | - | Binary sensor for window open/close |
+| `outdoor_temp_sensor` | No | - | Sensor for outdoor temperature |
+| `global_away_sensor` | No | - | Binary sensor for house empty status |
+| `presence_away_delay` | No | 15 | Minutes to wait after presence clears |
+| `outdoor_temp_threshold` | No | 20.0 | °C threshold for outdoor temp override |
+
+### Schedule and Override Features
+
+The thermostat supports time-based scheduling and sensor-based overrides with the following priority (highest to lowest):
+
+1. **Window Open** → Forces OFF (highest priority)
+2. **Outdoor Temperature** → Forces OFF when outdoor temp exceeds threshold
+3. **Manual User Change** → User manually selected preset
+4. **Presence Detection** → Overrides AWAY to PRESENT when room occupied
+5. **Global Away** → Forces AWAY when house is empty
+6. **Time Schedule** → Weekday/weekend time-based presets
+
+**Example schedule configuration:**
+```yaml
+schedule:
+  weekday:
+    - time: "06:00"
+      preset: present
+    - time: "08:00"
+      preset: away
+    - time: "17:00"
+      preset: present
+  weekend:
+    - time: "08:00"
+      preset: present
+```
+
+**Override behavior:**
+- Manual preset changes persist until next scheduled change
+- Presence override has 15-minute delay after person leaves
+- Window close resumes scheduled preset (clears manual override)
 
 ## How It Works
 

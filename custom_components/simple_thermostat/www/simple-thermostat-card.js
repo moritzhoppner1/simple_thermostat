@@ -129,6 +129,53 @@ class SimpleThermostatCard extends HTMLElement {
         color: var(--error-color, #ff0000);
       }
 
+      .override-indicator {
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .override-indicator.window {
+        background: var(--error-color, #ff5252);
+        color: white;
+      }
+
+      .override-indicator.outdoor-temp {
+        background: var(--warning-color, #ff9800);
+        color: white;
+      }
+
+      .override-indicator.manual {
+        background: var(--info-color, #2196F3);
+        color: white;
+      }
+
+      .override-indicator.presence {
+        background: var(--success-color, #4CAF50);
+        color: white;
+      }
+
+      .override-indicator.global-away {
+        background: var(--disabled-color, #9E9E9E);
+        color: white;
+      }
+
+      .override-indicator.schedule {
+        background: var(--primary-color, #03A9F4);
+        color: white;
+      }
+
+      .status-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+      }
+
       .logs-section {
         margin-top: 16px;
         border-top: 1px solid var(--divider-color);
@@ -328,21 +375,54 @@ class SimpleThermostatCard extends HTMLElement {
     const tempError = tempErrorEntity ? parseFloat(tempErrorEntity.state).toFixed(2) : '--';
     const isHeating = heatingEntity ? heatingEntity.state === 'on' : false;
 
+    // Get override status from entity attributes
+    const scheduledPreset = entity.attributes.scheduled_preset;
+    const manualOverride = entity.attributes.manual_override;
+    const presenceOverride = entity.attributes.presence_override;
+    const windowOpen = entity.attributes.window_open;
+    const outdoorTempHigh = entity.attributes.outdoor_temp_high;
+    const globalAway = entity.attributes.global_away;
+
+    // Build override indicators
+    let overrideIndicators = '';
+
+    if (windowOpen) {
+      overrideIndicators += '<div class="override-indicator window">🪟 Window Open → Heating OFF</div>';
+    }
+    if (outdoorTempHigh) {
+      overrideIndicators += '<div class="override-indicator outdoor-temp">🌡️ Outdoor Temp High → Heating OFF</div>';
+    }
+    if (manualOverride) {
+      overrideIndicators += `<div class="override-indicator manual">✋ Manual: ${manualOverride.toUpperCase()}</div>`;
+    }
+    if (presenceOverride) {
+      overrideIndicators += '<div class="override-indicator presence">👤 Presence Detected → PRESENT</div>';
+    }
+    if (globalAway) {
+      overrideIndicators += '<div class="override-indicator global-away">🏠 House Empty → AWAY</div>';
+    }
+    if (scheduledPreset && !manualOverride && !presenceOverride && !windowOpen && !outdoorTempHigh && !globalAway) {
+      overrideIndicators += `<div class="override-indicator schedule">📅 Schedule: ${scheduledPreset.toUpperCase()}</div>`;
+    }
+
     const statusSection = this.shadowRoot.getElementById('status');
     statusSection.innerHTML = `
-      <div class="status-item">
-        <div class="status-label">Control Mode</div>
-        <div class="status-value">
-          <span class="mode-badge ${controlMode}">${controlMode.replace('_', ' ')}</span>
+      ${overrideIndicators}
+      <div class="status-grid">
+        <div class="status-item">
+          <div class="status-label">Control Mode</div>
+          <div class="status-value">
+            <span class="mode-badge ${controlMode}">${controlMode.replace('_', ' ')}</span>
+          </div>
         </div>
-      </div>
-      <div class="status-item">
-        <div class="status-label">Temperature Error</div>
-        <div class="status-value">${tempError}°C</div>
-      </div>
-      <div class="status-item">
-        <div class="status-label">Heating Status</div>
-        <div class="status-value ${isHeating ? 'heating' : ''}">${isHeating ? '🔥 HEATING' : 'OFF'}</div>
+        <div class="status-item">
+          <div class="status-label">Temperature Error</div>
+          <div class="status-value">${tempError}°C</div>
+        </div>
+        <div class="status-item">
+          <div class="status-label">Heating Status</div>
+          <div class="status-value ${isHeating ? 'heating' : ''}">${isHeating ? '🔥 HEATING' : 'OFF'}</div>
+        </div>
       </div>
     `;
   }

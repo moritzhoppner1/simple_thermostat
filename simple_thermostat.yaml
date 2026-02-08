@@ -24,3 +24,30 @@
 
   # Initial preset
   initial_preset: present
+
+  # ===== OPTIONAL: Schedule-based automation =====
+  schedule:
+    weekday:
+      - time: "06:00"
+        preset: present  # Wake up - comfortable
+      - time: "08:00"
+        preset: away     # At work - energy saving
+      - time: "17:00"
+        preset: present  # Back home - comfortable
+      - time: "22:00"
+        preset: cosy     # Evening - extra warm
+    weekend:
+      - time: "08:00"
+        preset: present  # Wake up later on weekend
+      - time: "23:00"
+        preset: cosy     # Stay up later
+
+  # ===== OPTIONAL: Override sensors (pass your custom entities) =====
+  # presence_sensor: binary_sensor.kaminzimmer_occupied  # Room occupied → PRESENT
+  # window_sensor: binary_sensor.kaminzimmer_window      # Window open → OFF
+  # outdoor_temp_sensor: sensor.outdoor_temperature      # Outdoor >20°C → OFF
+  # global_away_sensor: binary_sensor.house_empty        # House empty → AWAY
+
+  # ===== OPTIONAL: Tuning parameters =====
+  # presence_away_delay: 15           # Minutes after presence clears (default: 15)
+  # outdoor_temp_threshold: 20.0      # °C (default: 20.0)

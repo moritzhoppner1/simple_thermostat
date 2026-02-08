@@ -31,6 +31,7 @@ from homeassistant.helpers.event import (
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from .sensor import async_create_sensors
+from .preset_manager import PresetManager
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -46,12 +47,21 @@ CONF_BINARY_THRESHOLD = "binary_threshold"
 CONF_HYSTERESIS = "hysteresis"
 CONF_SYNC_REMOTE_TEMP = "sync_remote_temp"
 CONF_INITIAL_PRESET = "initial_preset"
+CONF_SCHEDULE = "schedule"
+CONF_PRESENCE_SENSOR = "presence_sensor"
+CONF_WINDOW_SENSOR = "window_sensor"
+CONF_OUTDOOR_TEMP_SENSOR = "outdoor_temp_sensor"
+CONF_GLOBAL_AWAY_SENSOR = "global_away_sensor"
+CONF_PRESENCE_AWAY_DELAY = "presence_away_delay"
+CONF_OUTDOOR_TEMP_THRESHOLD = "outdoor_temp_threshold"
 
 DEFAULT_NAME = "Simple Thermostat"
 DEFAULT_BINARY_THRESHOLD = 0.5
 DEFAULT_HYSTERESIS = 0.3
 DEFAULT_SYNC_REMOTE_TEMP = True
 DEFAULT_INITIAL_PRESET = "present"
+DEFAULT_PRESENCE_AWAY_DELAY = 15
+DEFAULT_OUTDOOR_TEMP_THRESHOLD = 20.0
 
 PRESET_AWAY = "away"
 PRESET_PRESENT = "present"
@@ -96,6 +106,29 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
             [PRESET_AWAY, PRESET_PRESENT, PRESET_COSY, PRESET_OFF]
         ),
         vol.Optional(CONF_UNIQUE_ID): cv.string,
+        # Schedule configuration
+        vol.Optional(CONF_SCHEDULE): vol.Schema({
+            vol.Optional("weekday"): [
+                vol.Schema({
+                    vol.Required("time"): cv.string,
+                    vol.Required("preset"): vol.In([PRESET_AWAY, PRESET_PRESENT, PRESET_COSY, PRESET_OFF]),
+                })
+            ],
+            vol.Optional("weekend"): [
+                vol.Schema({
+                    vol.Required("time"): cv.string,
+                    vol.Required("preset"): vol.In([PRESET_AWAY, PRESET_PRESENT, PRESET_COSY, PRESET_OFF]),
+                })
+            ],
+        }),
+        # Override sensors
+        vol.Optional(CONF_PRESENCE_SENSOR): cv.entity_id,
+        vol.Optional(CONF_WINDOW_SENSOR): cv.entity_id,
+        vol.Optional(CONF_OUTDOOR_TEMP_SENSOR): cv.entity_id,
+        vol.Optional(CONF_GLOBAL_AWAY_SENSOR): cv.entity_id,
+        # Tuning parameters
+        vol.Optional(CONF_PRESENCE_AWAY_DELAY, default=DEFAULT_PRESENCE_AWAY_DELAY): vol.Coerce(int),
+        vol.Optional(CONF_OUTDOOR_TEMP_THRESHOLD, default=DEFAULT_OUTDOOR_TEMP_THRESHOLD): vol.Coerce(float),
     }
 )
 
@@ -149,7 +182,17 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     initial_preset = config.get(CONF_INITIAL_PRESET)
     unique_id = config.get(CONF_UNIQUE_ID)
 
+    # Schedule and override sensors (optional)
+    schedule_config = config.get(CONF_SCHEDULE)
+    presence_sensor = config.get(CONF_PRESENCE_SENSOR)
+    window_sensor = config.get(CONF_WINDOW_SENSOR)
+    outdoor_temp_sensor = config.get(CONF_OUTDOOR_TEMP_SENSOR)
+    global_away_sensor = config.get(CONF_GLOBAL_AWAY_SENSOR)
+    presence_away_delay = config.get(CONF_PRESENCE_AWAY_DELAY)
+    outdoor_temp_threshold = config.get(CONF_OUTDOOR_TEMP_THRESHOLD)
+
     thermostat = SimpleThermostat(
+        hass,
         name,
         temp_sensor,
         valve_entities,
@@ -163,6 +206,13 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         initial_preset,
         unique_id,
         trv_names,
+        schedule_config,
+        presence_sensor,
+        window_sensor,
+        outdoor_temp_sensor,
+        global_away_sensor,
+        presence_away_delay,
+        outdoor_temp_threshold,
     )
 
     async_add_entities([thermostat])
@@ -196,6 +246,7 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
 
     def __init__(
         self,
+        hass,
         name,
         temp_sensor,
         valve_entities,
@@ -209,8 +260,16 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
         initial_preset,
         unique_id,
         trv_names=None,
+        schedule_config=None,
+        presence_sensor=None,
+        window_sensor=None,
+        outdoor_temp_sensor=None,
+        global_away_sensor=None,
+        presence_away_delay=DEFAULT_PRESENCE_AWAY_DELAY,
+        outdoor_temp_threshold=DEFAULT_OUTDOOR_TEMP_THRESHOLD,
     ):
         """Initialize the thermostat."""
+        self.hass = hass
         self._attr_name = name
         self._attr_unique_id = unique_id
         self._temp_sensor = temp_sensor
@@ -227,7 +286,7 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
 
         self._attr_temperature_unit = UnitOfTemperature.CELSIUS
         self._attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
-        self._attr_preset_modes = [PRESET_AWAY, PRESET_PRESENT, PRESET_COSY]
+        self._attr_preset_modes = [PRESET_AWAY, PRESET_PRESENT, PRESET_COSY, PRESET_OFF]
         self._attr_supported_features = (
             ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.PRESET_MODE
         )
@@ -242,6 +301,20 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
         self.control_mode = CONTROL_MODE_OFF
         self._valve_positions = {}  # entity_id -> position
         self._trv_internal_temps = {}  # trv_index -> temp
+
+        # Initialize PresetManager
+        self._preset_manager = PresetManager(
+            hass,
+            name,
+            schedule_config,
+            presence_sensor,
+            window_sensor,
+            outdoor_temp_sensor,
+            global_away_sensor,
+            presence_away_delay,
+            outdoor_temp_threshold,
+            initial_preset,
+        )
         self._trv_target_temps = {}  # trv_index -> temp
         self._last_control_mode = None
 
@@ -256,16 +329,22 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
         """Run when entity about to be added."""
         await super().async_added_to_hass()
 
+        # Set up PresetManager
+        await self._preset_manager.async_setup()
+
         # Restore previous state
         last_state = await self.async_get_last_state()
         if last_state:
             self._hvac_mode = last_state.state
             if last_state.attributes.get("preset_mode"):
+                # Check if it was a manual preset change
                 self._preset_mode = last_state.attributes["preset_mode"]
+                self._preset_manager.set_manual_preset(self._preset_mode)
             if last_state.attributes.get("temperature"):
                 self._target_temp = last_state.attributes["temperature"]
 
-        # Set target temp based on preset
+        # Update preset from PresetManager
+        self._preset_mode = self._preset_manager.get_active_preset()
         self._update_target_temp_from_preset()
 
         # Listen to temperature sensor changes
@@ -279,6 +358,13 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
         self._remove_listeners.append(
             async_track_state_change_event(
                 self.hass, self._climate_entities, self._async_trv_state_changed
+            )
+        )
+
+        # Update preset every minute (check for schedule changes)
+        self._remove_listeners.append(
+            async_track_time_interval(
+                self.hass, self._async_update_preset, timedelta(minutes=1)
             )
         )
 
@@ -304,6 +390,10 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
 
     async def async_will_remove_from_hass(self):
         """Run when entity will be removed."""
+        # Clean up PresetManager listeners
+        await self._preset_manager.async_cleanup()
+
+        # Clean up local listeners
         for remove_listener in self._remove_listeners:
             remove_listener()
         self._remove_listeners.clear()
@@ -331,6 +421,7 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
     @property
     def extra_state_attributes(self):
         """Return extra state attributes."""
+        override_status = self._preset_manager.get_override_status()
         return {
             "control_mode": self.control_mode,
             "temperature_error": round(self._target_temp - self._cur_temp, 2) if self._cur_temp and self._target_temp else None,
@@ -338,6 +429,13 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
             "trv_internal_temps": self._trv_internal_temps,
             "trv_target_temps": self._trv_target_temps,
             "action_history": self._action_history[-10:],  # Last 10 actions for card
+            # Override status for UI
+            "scheduled_preset": override_status["scheduled_preset"],
+            "manual_override": override_status["manual_override"],
+            "presence_override": override_status["presence_override"],
+            "window_open": override_status["window_open"],
+            "outdoor_temp_high": override_status["outdoor_temp_high"],
+            "global_away": override_status["global_away"],
         }
 
     def _log_action(self, message):
@@ -393,6 +491,10 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
             _LOGGER.warning("Invalid preset mode: %s", preset_mode)
             return
 
+        # Notify PresetManager of manual change
+        self._preset_manager.set_manual_preset(preset_mode)
+
+        # Update local state
         self._preset_mode = preset_mode
         self._update_target_temp_from_preset()
         self._log_action(f"Preset changed to {preset_mode.upper()} ({self._target_temp}°C)")
@@ -440,6 +542,26 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
                 self._trv_internal_temps[idx] = float(internal_temp)
 
         self.async_write_ha_state()
+
+    async def _async_update_preset(self, _):
+        """Update preset from PresetManager."""
+        new_preset = self._preset_manager.get_active_preset()
+
+        if new_preset != self._preset_mode:
+            _LOGGER.info(
+                "%s: Preset automatically changed: %s → %s",
+                self.name,
+                self._preset_mode,
+                new_preset
+            )
+            self._preset_mode = new_preset
+            self._update_target_temp_from_preset()
+            self._log_action(f"Preset auto-changed to {new_preset.upper()} ({self._target_temp}°C)")
+
+            if self._hvac_mode == HVACMode.HEAT:
+                await self._async_control_heating()
+
+            self.async_write_ha_state()
 
     async def _async_update_temp(self):
         """Update current temperature from sensor."""
