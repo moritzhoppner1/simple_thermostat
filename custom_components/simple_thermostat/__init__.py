@@ -2,6 +2,7 @@
 import logging
 from pathlib import Path
 
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
 
@@ -18,14 +19,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType):
 
     if www_path.exists():
         # Register as a Lovelace resource
-        await hass.http.async_register_static_paths(
-            [
-                {
-                    "url_path": "/simple_thermostat",
-                    "path": str(www_path),
-                }
-            ]
-        )
+        await hass.http.async_register_static_paths([
+            StaticPathConfig("/simple_thermostat", str(www_path), False)
+        ])
 
         _LOGGER.info(
             "Registered Simple Thermostat card at /simple_thermostat/simple-thermostat-card.js"
