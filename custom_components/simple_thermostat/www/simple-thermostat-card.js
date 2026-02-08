@@ -494,6 +494,16 @@ class SimpleThermostatCard extends HTMLElement {
           }
         },
         {
+          id: 'error',
+          min: -3,
+          max: 3,
+          decimals: 1,
+          opposite: true,
+          apex_config: {
+            title: { text: 'Error °C' }
+          }
+        },
+        {
           id: 'percent',
           min: 0,
           max: 100,
@@ -550,9 +560,21 @@ class SimpleThermostatCard extends HTMLElement {
       name: 'Target',
       color: '#FF9800',
       stroke_width: 2,
-        curve: 'stepline',
+      curve: 'stepline',
       yaxis_id: 'temp'
     });
+
+    // Temperature error
+    const tempErrorSensor = `sensor.${baseName}_temperature_error`;
+    if (this._hass.states[tempErrorSensor]) {
+      series.push({
+        entity: tempErrorSensor,
+        name: 'Error',
+        color: '#E91E63',
+        stroke_width: 2,
+        yaxis_id: 'error'
+      });
+    }
 
     // TRV internal temp (try both hauptventil and trv naming)
     const trvTempSensors = [
@@ -569,6 +591,27 @@ class SimpleThermostatCard extends HTMLElement {
           stroke_width: 2,
           yaxis_id: 'temp',
           opacity: 0.7
+        });
+        break;
+      }
+    }
+
+    // TRV target temp (try both hauptventil and trv naming)
+    const trvTargetSensors = [
+      `sensor.${baseName}_hauptventil_target_temp`,
+      `sensor.${baseName}_trv_target_temp`,
+      `sensor.${baseName}_trv_1_target_temp`
+    ];
+    for (const sensor of trvTargetSensors) {
+      if (this._hass.states[sensor]) {
+        series.push({
+          entity: sensor,
+          name: 'TRV Target',
+          color: '#673AB7',
+          stroke_width: 1,
+          curve: 'stepline',
+          yaxis_id: 'temp',
+          opacity: 0.6
         });
         break;
       }
