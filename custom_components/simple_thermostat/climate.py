@@ -368,6 +368,13 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
             )
         )
 
+        # Refresh sensors every 15 seconds
+        self._remove_listeners.append(
+            async_track_time_interval(
+                self.hass, self._async_refresh_sensors, timedelta(seconds=15)
+            )
+        )
+
         # Initialize TRVs on startup
         @callback
         def _async_startup(_):
@@ -547,6 +554,22 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
 
         self.async_write_ha_state()
 
+    async def _async_refresh_sensors(self, _):
+        """Refresh all sensor readings every 15 seconds."""
+        # Read valve positions
+        await self._async_read_valve_positions()
+
+        # Read TRV internal temperatures
+        for idx, climate_entity in enumerate(self._climate_entities):
+            climate_state = self.hass.states.get(climate_entity)
+            if climate_state and climate_state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                internal_temp = climate_state.attributes.get("current_temperature")
+                if internal_temp is not None:
+                    self._trv_internal_temps[idx] = float(internal_temp)
+
+        # Update Home Assistant state to trigger sensor updates
+        self.async_write_ha_state()
+
     async def _async_update_preset(self, _):
         """Update preset from PresetManager."""
         new_preset = self._preset_manager.get_active_preset()
@@ -675,6 +698,9 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
         for idx, climate_entity in enumerate(self._climate_entities):
             await self._async_set_trv_temperature(climate_entity, idx, 30)
 
+        # Read back actual valve positions for monitoring
+        await self._async_read_valve_positions()
+
     async def _async_set_binary_cool_mode(self):
         """Binary cooling: valve 0%, temp 5°C."""
         self.control_mode = CONTROL_MODE_BINARY_COOL
@@ -686,6 +712,9 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
         # Set all TRVs to min temperature (5°C)
         for idx, climate_entity in enumerate(self._climate_entities):
             await self._async_set_trv_temperature(climate_entity, idx, 5)
+
+        # Read back actual valve positions for monitoring
+        await self._async_read_valve_positions()
 
     async def _async_set_proportional_mode(self):
         """Proportional control: calculate TRV target from external sensor."""
@@ -718,6 +747,10 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
         # In proportional mode, we don't directly control valve position
         # The TRV controls it based on the target temperature we set
         # But we should read back the valve positions for status
+        await self._async_read_valve_positions()
+
+    async def _async_read_valve_positions(self):
+        """Read current valve positions from all valve entities."""
         for valve_entity in self._valve_entities:
             valve_state = self.hass.states.get(valve_entity)
             if valve_state and valve_state.state not in (
