@@ -556,25 +556,22 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
 
     async def _async_refresh_sensors(self, _):
         """Refresh all sensor readings every 15 seconds."""
-        # Read valve positions
         await self._async_read_valve_positions()
+        await self._async_read_trv_temps()
+        self.async_write_ha_state()
 
-        # Read TRV internal temperatures and target temperatures
+    async def _async_read_trv_temps(self):
+        """Read TRV internal and target temperatures."""
         for idx, climate_entity in enumerate(self._climate_entities):
             climate_state = self.hass.states.get(climate_entity)
             if climate_state and climate_state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
-                # Read internal temperature
                 internal_temp = climate_state.attributes.get("current_temperature")
+                target_temp = climate_state.attributes.get("temperature")
+
                 if internal_temp is not None:
                     self._trv_internal_temps[idx] = float(internal_temp)
-
-                # Read target temperature
-                target_temp = climate_state.attributes.get("temperature")
                 if target_temp is not None:
                     self._trv_target_temps[idx] = float(target_temp)
-
-        # Update Home Assistant state to trigger sensor updates
-        self.async_write_ha_state()
 
     async def _async_update_preset(self, _):
         """Update preset from PresetManager."""
