@@ -65,7 +65,7 @@ class SimpleThermostatControlModeSensor(SensorEntity):
     def __init__(self, climate_entity):
         """Initialize the sensor."""
         self._climate_entity = climate_entity
-        self._attr_name = f"ST {climate_entity.name} Control Mode"
+        self._attr_name = f"{climate_entity.name} Control Mode"
         self._attr_unique_id = f"{climate_entity.unique_id}_control_mode"
         self._attr_icon = "mdi:thermometer-auto"
 
@@ -85,7 +85,7 @@ class SimpleThermostatErrorSensor(SensorEntity):
     def __init__(self, climate_entity):
         """Initialize the sensor."""
         self._climate_entity = climate_entity
-        self._attr_name = f"ST {climate_entity.name} Temperature Error"
+        self._attr_name = f"{climate_entity.name} Temperature Error"
         self._attr_unique_id = f"{climate_entity.unique_id}_temp_error"
         self._attr_icon = "mdi:delta"
         self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
@@ -109,7 +109,7 @@ class SimpleThermostatHeatingBinarySensor(BinarySensorEntity):
     def __init__(self, climate_entity):
         """Initialize the sensor."""
         self._climate_entity = climate_entity
-        self._attr_name = f"ST {climate_entity.name} Heating"
+        self._attr_name = f"{climate_entity.name} Heating"
         self._attr_unique_id = f"{climate_entity.unique_id}_heating"
         self._attr_icon = "mdi:fire"
         self._attr_device_class = "heat"
@@ -132,7 +132,7 @@ class SimpleThermostatTRVInternalTempSensor(SensorEntity):
         self._climate_entity = climate_entity
         self._trv_index = trv_index
         trv_suffix = _get_trv_suffix(climate_entity, trv_index)
-        self._attr_name = f"ST {climate_entity.name} {trv_suffix.replace('_', ' ').title()} Internal Temp"
+        self._attr_name = f"{climate_entity.name} {trv_suffix.replace('_', ' ').title()} Internal Temp"
         self._attr_unique_id = f"{climate_entity.unique_id}_{trv_suffix}_internal_temp"
         self._attr_icon = "mdi:thermometer"
         self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
@@ -156,7 +156,7 @@ class SimpleThermostatTRVTargetTempSensor(SensorEntity):
         self._climate_entity = climate_entity
         self._trv_index = trv_index
         trv_suffix = _get_trv_suffix(climate_entity, trv_index)
-        self._attr_name = f"ST {climate_entity.name} {trv_suffix.replace('_', ' ').title()} Target Temp"
+        self._attr_name = f"{climate_entity.name} {trv_suffix.replace('_', ' ').title()} Target Temp"
         self._attr_unique_id = f"{climate_entity.unique_id}_{trv_suffix}_target_temp"
         self._attr_icon = "mdi:target"
         self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
@@ -180,7 +180,7 @@ class SimpleThermostatTRVValvePositionSensor(SensorEntity):
         self._climate_entity = climate_entity
         self._trv_index = trv_index
         trv_suffix = _get_trv_suffix(climate_entity, trv_index)
-        self._attr_name = f"ST {climate_entity.name} {trv_suffix.replace('_', ' ').title()} Valve Position"
+        self._attr_name = f"{climate_entity.name} {trv_suffix.replace('_', ' ').title()} Valve Position"
         self._attr_unique_id = f"{climate_entity.unique_id}_{trv_suffix}_valve_position"
         self._attr_icon = "mdi:valve"
         self._attr_native_unit_of_measurement = "%"
@@ -205,7 +205,7 @@ class SimpleThermostatTRVHeatingBinarySensor(BinarySensorEntity):
         self._climate_entity = climate_entity
         self._trv_index = trv_index
         trv_suffix = _get_trv_suffix(climate_entity, trv_index)
-        self._attr_name = f"ST {climate_entity.name} {trv_suffix.replace('_', ' ').title()} Heating"
+        self._attr_name = f"{climate_entity.name} {trv_suffix.replace('_', ' ').title()} Heating"
         self._attr_unique_id = f"{climate_entity.unique_id}_{trv_suffix}_heating"
         self._attr_icon = "mdi:fire"
         self._attr_device_class = "heat"
