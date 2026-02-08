@@ -531,12 +531,25 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
         """Handle temperature sensor changes."""
         new_state = event.data.get("new_state")
         if new_state is None or new_state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+            _LOGGER.warning("%s: Temperature sensor unavailable or unknown", self.name)
             return
 
+        old_temp = self._cur_temp
         await self._async_update_temp()
+
+        _LOGGER.info(
+            "%s: Temperature changed: %.1f°C -> %.1f°C (target: %.1f°C, error: %.1f°C)",
+            self.name,
+            old_temp if old_temp else 0,
+            self._cur_temp if self._cur_temp else 0,
+            self._target_temp if self._target_temp else 0,
+            (self._target_temp - self._cur_temp) if (self._target_temp and self._cur_temp) else 0
+        )
 
         if self._hvac_mode == HVACMode.HEAT:
             await self._async_control_heating()
+        else:
+            _LOGGER.info("%s: Skipping control heating - HVAC mode is %s", self.name, self._hvac_mode)
 
         self.async_write_ha_state()
 
@@ -660,20 +673,39 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
 
     async def _async_control_heating(self):
         """Main control logic: hybrid binary + proportional control."""
+        _LOGGER.info(
+            "%s: _async_control_heating called - enabled=%s, cur_temp=%s, target_temp=%s",
+            self.name,
+            self._enabled,
+            self._cur_temp,
+            self._target_temp
+        )
+
         if not self._enabled or self._cur_temp is None or self._target_temp is None:
+            _LOGGER.info("%s: Skipping control - not enabled or temps None", self.name)
             return
 
         error = self._target_temp - self._cur_temp
 
+        _LOGGER.info(
+            "%s: Control logic - error=%.2f°C, binary_threshold=%.2f°C",
+            self.name,
+            error,
+            self._binary_threshold
+        )
+
         # Determine control mode based on error
         if error > self._binary_threshold:
             # Too cold - binary heating mode
+            _LOGGER.info("%s: Error > threshold → binary heat mode", self.name)
             await self._async_set_binary_heat_mode()
         elif error < -self._binary_threshold:
             # Too hot - binary cooling mode (turn off)
+            _LOGGER.info("%s: Error < -threshold → binary cool mode (turn off)", self.name)
             await self._async_set_binary_cool_mode()
         else:
             # Near target - proportional control mode
+            _LOGGER.info("%s: Error within threshold → proportional mode", self.name)
             await self._async_set_proportional_mode()
 
         # Log mode changes
