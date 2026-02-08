@@ -14,26 +14,25 @@ async def async_setup(hass: HomeAssistant, config: ConfigType):
     """Set up the Simple Thermostat component."""
 
     # Register the custom Lovelace card
-    card_path = Path(__file__).parent / "www" / "simple-thermostat-card.js"
+    www_path = Path(__file__).parent / "www"
 
-    if card_path.exists():
+    if www_path.exists():
         # Register as a Lovelace resource
-        hass.http.register_static_path(
-            f"/simple_thermostat/simple-thermostat-card.js",
-            str(card_path),
-            cache_headers=False
+        await hass.http.async_register_static_paths(
+            [
+                {
+                    "url_path": "/simple_thermostat",
+                    "path": str(www_path),
+                }
+            ]
         )
 
         _LOGGER.info(
             "Registered Simple Thermostat card at /simple_thermostat/simple-thermostat-card.js"
         )
-        _LOGGER.info(
-            "Add this to your Lovelace resources: "
-            "url: /simple_thermostat/simple-thermostat-card.js, type: module"
-        )
     else:
         _LOGGER.warning(
-            "Simple Thermostat card file not found at %s", card_path
+            "Simple Thermostat card www folder not found at %s", www_path
         )
 
     return True
