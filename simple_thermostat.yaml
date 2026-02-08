@@ -4,8 +4,11 @@
 
   # Sensor IDs (automatically constructs full entity IDs)
   temperature_sensor_id: "0x983268fffe9878e4"
+
+  # TRV configuration with optional names
   trv_ids:
-    - "0x08b95ffffe5184ce"
+    - id: "0x08b95ffffe5184ce"
+      name: "Hauptventil"  # Optional: friendly name for sensors
 
   # Preset temperatures (°C) - adjust to your preference
   away_temp: 18.0
