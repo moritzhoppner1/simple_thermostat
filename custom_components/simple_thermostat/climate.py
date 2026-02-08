@@ -23,6 +23,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import callback
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.discovery import async_load_platform
 from homeassistant.helpers.event import (
     async_track_state_change_event,
     async_track_time_interval,
@@ -142,12 +143,24 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     # Create diagnostic sensors
     sensors = await async_create_sensors(hass, thermostat)
     if sensors:
-        # Add sensors to Home Assistant
-        await hass.helpers.discovery.async_load_platform(
-            "sensor", "simple_thermostat", {"sensors": sensors}, {}
+        # Load sensor platforms (non-blocking)
+        hass.async_create_task(
+            async_load_platform(
+                hass,
+                "sensor",
+                "simple_thermostat",
+                {"sensors": sensors},
+                config
+            )
         )
-        await hass.helpers.discovery.async_load_platform(
-            "binary_sensor", "simple_thermostat", {"sensors": sensors}, {}
+        hass.async_create_task(
+            async_load_platform(
+                hass,
+                "binary_sensor",
+                "simple_thermostat",
+                {"sensors": sensors},
+                config
+            )
         )
 
 

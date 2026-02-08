@@ -8,6 +8,18 @@ from homeassistant.const import UnitOfTemperature
 _LOGGER = logging.getLogger(__name__)
 
 
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+    """Set up Simple Thermostat sensor platform."""
+    if discovery_info is None:
+        return
+
+    sensors = discovery_info.get("sensors", [])
+    sensor_entities = [s for s in sensors if isinstance(s, SensorEntity)]
+
+    if sensor_entities:
+        async_add_entities(sensor_entities, update_before_add=True)
+
+
 async def async_create_sensors(hass, climate_entity):
     """Create diagnostic sensors for a climate entity."""
     sensors = []
