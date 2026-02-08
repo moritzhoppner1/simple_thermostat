@@ -281,6 +281,9 @@ class SimpleThermostatCard extends HTMLElement {
     // Update status
     this._updateStatus(baseName, entity);
 
+    // Update chart
+    this._updateChart(baseName, entity);
+
     // Update logs
     this._updateLogs(entity);
   }
@@ -417,8 +420,172 @@ class SimpleThermostatCard extends HTMLElement {
     });
   }
 
+  _updateChart(baseName, entity) {
+    const chartSection = this.shadowRoot.getElementById('chart');
+
+    // Check if ApexCharts card is available
+    if (!customElements.get('apexcharts-card')) {
+      chartSection.innerHTML = `
+        <div style="padding: 12px; background: var(--warning-color, #ff9800); color: white; border-radius: 8px; text-align: center;">
+          ⚠️ ApexCharts card not installed. Install via HACS to see the temperature graph.
+        </div>
+      `;
+      return;
+    }
+
+    // Find temperature sensor from entity attributes
+    const tempSensorId = entity.attributes.temperature_sensor || `sensor.${baseName}_temperature`;
+
+    // Create ApexCharts card configuration
+    const apexConfig = {
+      type: 'custom:apexcharts-card',
+      header: {
+        show: true,
+        title: `${entity.attributes.friendly_name} - Heating`,
+        show_states: true,
+        colorize_states: true
+      },
+      graph_span: '24h',
+      hours_12: false,
+      yaxis: [
+        {
+          id: 'temp',
+          min: 10,
+          max: 30,
+          decimals: 1,
+          apex_config: {
+            title: { text: '°C' }
+          }
+        },
+        {
+          id: 'percent',
+          min: 0,
+          max: 100,
+          decimals: 0,
+          opposite: true,
+          apex_config: {
+            title: { text: '%' }
+          }
+        },
+        {
+          id: 'status',
+          min: 0,
+          max: 1,
+          show: false,
+          opposite: true
+        }
+      ],
+      series: this._getChartSeries(baseName, tempSensorId),
+      apex_config: {
+        chart: { height: 300 },
+        legend: { show: true, position: 'bottom' },
+        tooltip: { enabled: true, shared: true }
+      }
+    };
+
+    // Create ApexCharts card element
+    const apexCard = document.createElement('apexcharts-card');
+    apexCard.setConfig(apexConfig);
+    apexCard.hass = this._hass;
+
+    // Clear and add chart
+    chartSection.innerHTML = '';
+    chartSection.appendChild(apexCard);
+  }
+
+  _getChartSeries(baseName, tempSensorId) {
+    const series = [];
+
+    // Room temperature (external sensor)
+    if (this._hass.states[tempSensorId]) {
+      series.push({
+        entity: tempSensorId,
+        name: 'Room Temp',
+        color: '#4CAF50',
+        stroke_width: 3,
+        yaxis_id: 'temp'
+      });
+    }
+
+    // Target temperature
+    series.push({
+      entity: `climate.${baseName}`,
+      attribute: 'temperature',
+      name: 'Target',
+      color: '#FF9800',
+      stroke_width: 2,
+        curve: 'stepline',
+      yaxis_id: 'temp'
+    });
+
+    // TRV internal temp (try both hauptventil and trv naming)
+    const trvTempSensors = [
+      `sensor.${baseName}_hauptventil_internal_temp`,
+      `sensor.${baseName}_trv_internal_temp`,
+      `sensor.${baseName}_trv_1_internal_temp`
+    ];
+    for (const sensor of trvTempSensors) {
+      if (this._hass.states[sensor]) {
+        series.push({
+          entity: sensor,
+          name: 'TRV Temp',
+          color: '#9C27B0',
+          stroke_width: 2,
+          yaxis_id: 'temp',
+          opacity: 0.7
+        });
+        break;
+      }
+    }
+
+    // Valve position
+    const valveSensors = [
+      `sensor.${baseName}_hauptventil_valve_position`,
+      `sensor.${baseName}_trv_valve_position`,
+      `sensor.${baseName}_trv_1_valve_position`
+    ];
+    for (const sensor of valveSensors) {
+      if (this._hass.states[sensor]) {
+        series.push({
+          entity: sensor,
+          name: 'Valve',
+          color: '#00BCD4',
+          stroke_width: 2,
+          curve: 'stepline',
+          yaxis_id: 'percent'
+        });
+        break;
+      }
+    }
+
+    // Heating status
+    const heatingSensors = [
+      `binary_sensor.${baseName}_hauptventil_heating`,
+      `binary_sensor.${baseName}_trv_heating`,
+      `binary_sensor.${baseName}_trv_1_heating`
+    ];
+    for (const sensor of heatingSensors) {
+      if (this._hass.states[sensor]) {
+        series.push({
+          entity: sensor,
+          name: 'Heating',
+          color: '#F44336',
+          type: 'area',
+          curve: 'stepline',
+          stroke_width: 0,
+          yaxis_id: 'status',
+          opacity: 0.2,
+          transform: "return x === 'on' ? 1 : 0;"
+        });
+        break;
+      }
+    }
+
+    return series;
+  }
+
   getCardSize() {
-    return 4;
+    return 6;
   }
 
   static getStubConfig() {
