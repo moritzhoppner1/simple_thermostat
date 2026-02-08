@@ -429,6 +429,10 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
             "trv_internal_temps": self._trv_internal_temps,
             "trv_target_temps": self._trv_target_temps,
             "action_history": self._action_history[-10:],  # Last 10 actions for card
+            # Preset temperatures for UI sliders
+            "away_temp": self._away_temp,
+            "present_temp": self._present_temp,
+            "cosy_temp": self._cosy_temp,
             # Override status for UI
             "scheduled_preset": override_status["scheduled_preset"],
             "manual_override": override_status["manual_override"],

@@ -270,6 +270,80 @@ class SimpleThermostatCard extends HTMLElement {
       .chart-section {
         margin: 16px 0;
       }
+
+      .sliders-section {
+        margin-top: 16px;
+        padding: 16px;
+        background: var(--card-background-color, #fff);
+        border-radius: var(--ha-card-border-radius, 8px);
+        border: 1px solid var(--divider-color, #e0e0e0);
+      }
+
+      .sliders-header {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        color: var(--primary-text-color, #000);
+      }
+
+      .slider-item {
+        margin-bottom: 16px;
+      }
+
+      .slider-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .slider-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 13px;
+        color: var(--secondary-text-color, #666);
+      }
+
+      .slider-label-name {
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .slider-label-value {
+        font-weight: 600;
+        color: var(--primary-text-color, #000);
+        font-size: 14px;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        height: 6px;
+        border-radius: 3px;
+        background: var(--divider-color, #e0e0e0);
+        outline: none;
+        -webkit-appearance: none;
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--primary-color, #03a9f4);
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      }
+
+      input[type="range"]::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--primary-color, #03a9f4);
+        cursor: pointer;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      }
     `;
 
     this.shadowRoot.appendChild(style);
@@ -280,6 +354,7 @@ class SimpleThermostatCard extends HTMLElement {
         <div class="thermostat-section" id="thermostat"></div>
         <div class="preset-buttons" id="presets"></div>
         <div class="status-section" id="status"></div>
+        <div class="sliders-section" id="sliders"></div>
         <div class="chart-section" id="chart"></div>
         <div class="logs-section">
           <div class="logs-header" id="logs-toggle">
@@ -327,6 +402,9 @@ class SimpleThermostatCard extends HTMLElement {
 
     // Update status
     this._updateStatus(baseName, entity);
+
+    // Update sliders
+    this._updateSliders(entity);
 
     // Update chart
     this._updateChart(baseName, entity);
@@ -429,6 +507,70 @@ class SimpleThermostatCard extends HTMLElement {
     `;
   }
 
+  _updateSliders(entity) {
+    const awayTemp = entity.attributes.away_temp || 18;
+    const presentTemp = entity.attributes.present_temp || 21;
+    const cosyTemp = entity.attributes.cosy_temp || 23;
+
+    const slidersSection = this.shadowRoot.getElementById('sliders');
+    slidersSection.innerHTML = `
+      <div class="sliders-header">Preset Temperatures</div>
+
+      <div class="slider-item">
+        <div class="slider-label">
+          <span class="slider-label-name">Away</span>
+          <span class="slider-label-value" id="away-value">${awayTemp.toFixed(1)}°C</span>
+        </div>
+        <input type="range" id="away-slider" min="10" max="25" step="0.5" value="${awayTemp}">
+      </div>
+
+      <div class="slider-item">
+        <div class="slider-label">
+          <span class="slider-label-name">Present</span>
+          <span class="slider-label-value" id="present-value">${presentTemp.toFixed(1)}°C</span>
+        </div>
+        <input type="range" id="present-slider" min="10" max="25" step="0.5" value="${presentTemp}">
+      </div>
+
+      <div class="slider-item">
+        <div class="slider-label">
+          <span class="slider-label-name">Cosy</span>
+          <span class="slider-label-value" id="cosy-value">${cosyTemp.toFixed(1)}°C</span>
+        </div>
+        <input type="range" id="cosy-slider" min="10" max="25" step="0.5" value="${cosyTemp}">
+      </div>
+    `;
+
+    // Add event listeners for sliders
+    const awaySlider = slidersSection.querySelector('#away-slider');
+    const presentSlider = slidersSection.querySelector('#present-slider');
+    const cosySlider = slidersSection.querySelector('#cosy-slider');
+
+    awaySlider.addEventListener('input', (e) => {
+      slidersSection.querySelector('#away-value').textContent = `${parseFloat(e.target.value).toFixed(1)}°C`;
+    });
+
+    awaySlider.addEventListener('change', (e) => {
+      this._setPresetTemp('away_temp', parseFloat(e.target.value));
+    });
+
+    presentSlider.addEventListener('input', (e) => {
+      slidersSection.querySelector('#present-value').textContent = `${parseFloat(e.target.value).toFixed(1)}°C`;
+    });
+
+    presentSlider.addEventListener('change', (e) => {
+      this._setPresetTemp('present_temp', parseFloat(e.target.value));
+    });
+
+    cosySlider.addEventListener('input', (e) => {
+      slidersSection.querySelector('#cosy-value').textContent = `${parseFloat(e.target.value).toFixed(1)}°C`;
+    });
+
+    cosySlider.addEventListener('change', (e) => {
+      this._setPresetTemp('cosy_temp', parseFloat(e.target.value));
+    });
+  }
+
   _updateLogs(entity) {
     const logsContent = this.shadowRoot.getElementById('logs-content');
     const actionHistory = entity.attributes.action_history || [];
@@ -455,6 +597,13 @@ class SimpleThermostatCard extends HTMLElement {
     this._hass.callService('climate', 'set_preset_mode', {
       entity_id: this._config.entity,
       preset_mode: preset
+    });
+  }
+
+  _setPresetTemp(attribute, value) {
+    this._hass.callService('simple_thermostat', 'set_preset_temperature', {
+      entity_id: this._config.entity,
+      [attribute]: value
     });
   }
 
