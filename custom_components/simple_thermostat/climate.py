@@ -559,13 +559,19 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
         # Read valve positions
         await self._async_read_valve_positions()
 
-        # Read TRV internal temperatures
+        # Read TRV internal temperatures and target temperatures
         for idx, climate_entity in enumerate(self._climate_entities):
             climate_state = self.hass.states.get(climate_entity)
             if climate_state and climate_state.state not in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+                # Read internal temperature
                 internal_temp = climate_state.attributes.get("current_temperature")
                 if internal_temp is not None:
                     self._trv_internal_temps[idx] = float(internal_temp)
+
+                # Read target temperature
+                target_temp = climate_state.attributes.get("temperature")
+                if target_temp is not None:
+                    self._trv_target_temps[idx] = float(target_temp)
 
         # Update Home Assistant state to trigger sensor updates
         self.async_write_ha_state()
