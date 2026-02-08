@@ -426,8 +426,8 @@ class SimpleThermostatCard extends HTMLElement {
     const thermostatSection = this.shadowRoot.getElementById('thermostat');
     thermostatSection.innerHTML = `
       <div>
-        <div class="temperature-display">${currentTemp !== undefined ? currentTemp.toFixed(1) : '--'}°C</div>
-        <div class="target-temp">Target: ${targetTemp !== undefined ? targetTemp.toFixed(1) : '--'}°C ${isHeating ? '🔥' : ''}</div>
+        <div class="temperature-display">${currentTemp != null ? currentTemp.toFixed(1) : '--'}°C</div>
+        <div class="target-temp">Target: ${targetTemp != null ? targetTemp.toFixed(1) : '--'}°C ${isHeating ? '🔥' : ''}</div>
       </div>
     `;
   }
