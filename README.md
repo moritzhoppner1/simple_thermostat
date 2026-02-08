@@ -68,7 +68,25 @@ The custom card is automatically registered - no manual resource configuration n
 
 ## Configuration
 
-Add to your `configuration.yaml`:
+### Finding Your Entity IDs
+
+Before configuring, you need to find your TRV entity IDs in Home Assistant:
+
+1. **Go to Developer Tools → States**
+2. **Search for your room name** (e.g., "kaminzimmer" or "living room")
+3. **Look for these entities:**
+   - **External temperature sensor:** `sensor.ROOM_temperature` (your room temperature sensor)
+   - **TRV climate entities:** `climate.ROOM_trv` or similar
+   - **TRV valve position:** `number.ROOM_trv_pi_heating_demand`
+
+**Example for "Kaminzimmer":**
+- Temperature sensor: `sensor.kaminzimmer_temperature`
+- Climate entity: `climate.kaminzimmer_trv`
+- Valve position: `number.kaminzimmer_trv_pi_heating_demand`
+
+### Add to your `configuration.yaml`
+
+**Simple configuration (recommended):**
 
 ```yaml
 climate:
@@ -79,13 +97,12 @@ climate:
     # External temperature sensor
     temperature_sensor: sensor.living_room_temperature
 
-    # TRV valve position entities
-    valve_entities:
-      - number.living_room_trv_pi_heating_demand
-
-    # TRV climate entities
-    climate_entities:
-      - climate.living_room_trv
+    # TRV IDs (automatically creates valve and climate entities)
+    trv_ids:
+      - living_room_trv
+    # Auto-constructs:
+    #   number.living_room_trv_pi_heating_demand (valve)
+    #   climate.living_room_trv (climate)
 
     # Preset temperatures (°C)
     away_temp: 18.0
@@ -101,6 +118,27 @@ climate:
 
     # Initial preset
     initial_preset: present
+```
+
+**Advanced configuration (explicit entity IDs):**
+
+If your TRV entities don't follow the standard naming pattern, use explicit entity IDs:
+
+```yaml
+climate:
+  - platform: simple_thermostat
+    name: "Living Room"
+    temperature_sensor: sensor.living_room_temperature
+
+    # Explicit entity IDs
+    valve_entities:
+      - number.custom_valve_name_pi_heating_demand
+    climate_entities:
+      - climate.custom_climate_name
+
+    away_temp: 18.0
+    present_temp: 21.0
+    cosy_temp: 23.0
 ```
 
 ### Configuration Options

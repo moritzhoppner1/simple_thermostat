@@ -1,0 +1,26 @@
+climate:
+  - platform: simple_thermostat
+    name: "Kaminzimmer"
+    unique_id: "kaminzimmer_thermostat"
+
+    # External temperature sensor
+    temperature_sensor: sensor.0x983268fffe9878e4_temperature
+
+    # TRV IDs (automatically constructs valve and climate entities)
+    trv_ids:
+      - 0x08b95ffffe5184ce
+
+    # Preset temperatures (°C) - adjust to your preference
+    away_temp: 18.0
+    present_temp: 21.0
+    cosy_temp: 23.0
+
+    # Control thresholds
+    binary_threshold: 0.5
+    hysteresis: 0.3
+
+    # Remote temperature sync
+    sync_remote_temp: true
+
+    # Initial preset
+    initial_preset: present

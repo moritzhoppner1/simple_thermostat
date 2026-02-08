@@ -2,7 +2,7 @@
 # Add this to your Home Assistant configuration.yaml
 
 climate:
-  # Living Room Example - Single TRV
+  # Living Room Example - Single TRV (Simplified Config)
   - platform: simple_thermostat
     name: "Living Room"
     unique_id: "living_room_thermostat"
@@ -10,13 +10,12 @@ climate:
     # External temperature sensor (room sensor, NOT TRV's internal)
     temperature_sensor: sensor.living_room_temperature
 
-    # TRV valve position entities (pi_heating_demand)
-    valve_entities:
-      - number.living_room_trv_pi_heating_demand
-
-    # TRV climate entities (for temperature control)
-    climate_entities:
-      - climate.living_room_trv
+    # TRV IDs (automatically constructs valve and climate entities)
+    trv_ids:
+      - living_room_trv
+    # This auto-creates:
+    #   - number.living_room_trv_pi_heating_demand (valve)
+    #   - climate.living_room_trv (climate)
 
     # Preset temperatures (°C)
     away_temp: 18.0       # When away from home
@@ -33,7 +32,7 @@ climate:
     # Initial preset on startup
     initial_preset: present
 
-  # Kitchen Example - Multiple TRVs in one room
+  # Kitchen Example - Multiple TRVs in one room (Simplified Config)
   - platform: simple_thermostat
     name: "Kitchen"
     unique_id: "kitchen_thermostat"
@@ -41,15 +40,10 @@ climate:
     # One external sensor for the whole room
     temperature_sensor: sensor.kitchen_temperature
 
-    # Multiple TRV valve entities (all controlled together)
-    valve_entities:
-      - number.kitchen_trv_1_pi_heating_demand
-      - number.kitchen_trv_2_pi_heating_demand
-
-    # Multiple TRV climate entities
-    climate_entities:
-      - climate.kitchen_trv_1
-      - climate.kitchen_trv_2
+    # Multiple TRV IDs (all controlled together)
+    trv_ids:
+      - kitchen_trv_1
+      - kitchen_trv_2
 
     # Preset temperatures
     away_temp: 16.0
@@ -63,18 +57,15 @@ climate:
     sync_remote_temp: true
     initial_preset: present
 
-  # Bedroom Example - Lower temperatures
+  # Bedroom Example - Lower temperatures (Simplified Config)
   - platform: simple_thermostat
     name: "Bedroom"
     unique_id: "bedroom_thermostat"
 
     temperature_sensor: sensor.bedroom_temperature
 
-    valve_entities:
-      - number.bedroom_trv_pi_heating_demand
-
-    climate_entities:
-      - climate.bedroom_trv
+    trv_ids:
+      - bedroom_trv
 
     # Cooler preset temperatures for sleeping
     away_temp: 16.0
@@ -85,6 +76,23 @@ climate:
     hysteresis: 0.3
     sync_remote_temp: true
     initial_preset: present
+
+  # Advanced Example - Explicit entity IDs (if auto-construction doesn't work)
+  - platform: simple_thermostat
+    name: "Office"
+    unique_id: "office_thermostat"
+
+    temperature_sensor: sensor.office_temperature
+
+    # Use explicit entity IDs instead of trv_ids
+    valve_entities:
+      - number.custom_valve_name_pi_heating_demand
+    climate_entities:
+      - climate.custom_climate_name
+
+    away_temp: 18.0
+    present_temp: 21.0
+    cosy_temp: 23.0
 
 # ============================================
 # NOTES
