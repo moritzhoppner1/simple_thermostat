@@ -34,6 +34,7 @@ from .sensor import async_create_sensors
 _LOGGER = logging.getLogger(__name__)
 
 CONF_TEMP_SENSOR = "temperature_sensor"
+CONF_TEMP_SENSOR_ID = "temperature_sensor_id"
 CONF_VALVE_ENTITIES = "valve_entities"
 CONF_CLIMATE_ENTITIES = "climate_entities"
 CONF_TRV_IDS = "trv_ids"
@@ -65,7 +66,8 @@ REMOTE_TEMP_SYNC_INTERVAL = timedelta(minutes=25)
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_NAME): cv.string,
-        vol.Required(CONF_TEMP_SENSOR): cv.entity_id,
+        vol.Exclusive(CONF_TEMP_SENSOR_ID, "temp_sensor_config"): cv.string,
+        vol.Exclusive(CONF_TEMP_SENSOR, "temp_sensor_config"): cv.entity_id,
         vol.Exclusive(CONF_TRV_IDS, "trv_config"): cv.entity_ids,
         vol.Exclusive(CONF_VALVE_ENTITIES, "trv_config"): cv.entity_ids,
         vol.Optional(CONF_CLIMATE_ENTITIES): cv.entity_ids,
@@ -88,7 +90,16 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Simple Thermostat platform."""
     name = config.get(CONF_NAME)
-    temp_sensor = config.get(CONF_TEMP_SENSOR)
+
+    # Support simplified temperature_sensor_id configuration
+    temp_sensor_id = config.get(CONF_TEMP_SENSOR_ID)
+    if temp_sensor_id:
+        # Auto-construct temperature sensor entity ID
+        temp_sensor = f"sensor.{temp_sensor_id}_temperature"
+        _LOGGER.info(f"Auto-constructed temperature sensor from temp_sensor_id: {temp_sensor}")
+    else:
+        # Use explicit temperature_sensor
+        temp_sensor = config.get(CONF_TEMP_SENSOR)
 
     # Support simplified trv_ids configuration
     trv_ids = config.get(CONF_TRV_IDS)

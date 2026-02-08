@@ -94,15 +94,10 @@ climate:
     name: "Living Room"
     unique_id: "living_room_thermostat"
 
-    # External temperature sensor
-    temperature_sensor: sensor.living_room_temperature
-
-    # TRV IDs (automatically creates valve and climate entities)
+    # Sensor IDs (automatically constructs full entity IDs)
+    temperature_sensor_id: living_room  # Creates: sensor.living_room_temperature
     trv_ids:
-      - living_room_trv
-    # Auto-constructs:
-    #   number.living_room_trv_pi_heating_demand (valve)
-    #   climate.living_room_trv (climate)
+      - living_room_trv  # Creates: number.living_room_trv_pi_heating_demand, climate.living_room_trv
 
     # Preset temperatures (°C)
     away_temp: 18.0

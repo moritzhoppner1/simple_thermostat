@@ -3,12 +3,10 @@ climate:
     name: "Kaminzimmer"
     unique_id: "kaminzimmer_thermostat"
 
-    # External temperature sensor
-    temperature_sensor: sensor.0x983268fffe9878e4_temperature
-
-    # TRV IDs (automatically constructs valve and climate entities)
+    # Sensor IDs (automatically constructs full entity IDs)
+    temperature_sensor_id: 0x983268fffe9878e4  # Creates: sensor.0x983268fffe9878e4_temperature
     trv_ids:
-      - 0x08b95ffffe5184ce
+      - 0x08b95ffffe5184ce  # Creates: number.0x08b95ffffe5184ce_pi_heating_demand, climate.0x08b95ffffe5184ce
 
     # Preset temperatures (°C) - adjust to your preference
     away_temp: 18.0
