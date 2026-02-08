@@ -726,7 +726,7 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
             ):
                 try:
                     self._valve_positions[valve_entity] = float(valve_state.state)
-                    _LOGGER.debug(
+                    _LOGGER.info(
                         "%s: Read valve position from %s = %s%%",
                         self.name,
                         valve_entity,
