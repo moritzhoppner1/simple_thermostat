@@ -1,0 +1,45 @@
+# Copy this to your Home Assistant's /config/configuration.yaml
+
+# Loads default set of integrations. Do not remove.
+default_config:
+
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 100.64.0.0/10
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+# Packages laden (alles in einer Datei pro Feature)
+homeassistant:
+  packages: !include_dir_named packages/
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+# Templates aus einem Ordner laden (mehrere Dateien möglich)
+template: !include_dir_merge_list templates/
+
+# Climate configuration
+climate: !include templates/simple_thermostat.yaml
+
+# --- Sensors ---
+sensor:
+  - platform: history_stats
+    name: Poolpumpe Stunden heute
+    unique_id: poolpumpe_on_today
+    entity_id: switch.pool_pumpe
+    state: "on"
+    type: time
+    start: "{{ today_at('00:00') }}"
+    end: "{{ now() }}"
+
+# --- Daily energy meter (today only) ---
+utility_meter:
+  poolpumpe_energy_today:
+    name: Poolpumpe Energie heute
+    source: sensor.pool_pumpe_total_energy
+    cycle: daily

@@ -68,7 +68,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_NAME): cv.string,
         vol.Exclusive(CONF_TEMP_SENSOR_ID, "temp_sensor_config"): cv.string,
         vol.Exclusive(CONF_TEMP_SENSOR, "temp_sensor_config"): cv.entity_id,
-        vol.Exclusive(CONF_TRV_IDS, "trv_config"): cv.entity_ids,
+        vol.Exclusive(CONF_TRV_IDS, "trv_config"): vol.All(cv.ensure_list, [cv.string]),
         vol.Exclusive(CONF_VALVE_ENTITIES, "trv_config"): cv.entity_ids,
         vol.Optional(CONF_CLIMATE_ENTITIES): cv.entity_ids,
         vol.Required(CONF_AWAY_TEMP): vol.Coerce(float),

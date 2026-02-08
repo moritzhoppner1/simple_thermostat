@@ -84,6 +84,8 @@ Before configuring, you need to find your TRV entity IDs in Home Assistant:
 - Climate entity: `climate.kaminzimmer_trv`
 - Valve position: `number.kaminzimmer_trv_pi_heating_demand`
 
+**Note:** When using Zigbee2MQTT hex IDs (like `0x08b95ffffe5184ce`), always use quotes to prevent YAML from interpreting them as numbers.
+
 ### Add to your `configuration.yaml`
 
 **Simple configuration (recommended):**
@@ -113,6 +115,24 @@ climate:
 
     # Initial preset
     initial_preset: present
+```
+
+**Example with Zigbee2MQTT hex IDs (use quotes):**
+
+```yaml
+climate:
+  - platform: simple_thermostat
+    name: "Kaminzimmer"
+    unique_id: "kaminzimmer_thermostat"
+
+    # Hex IDs must be quoted to prevent YAML parsing as numbers
+    temperature_sensor_id: "0x983268fffe9878e4"
+    trv_ids:
+      - "0x08b95ffffe5184ce"
+
+    away_temp: 18.0
+    present_temp: 21.0
+    cosy_temp: 23.0
 ```
 
 **Advanced configuration (explicit entity IDs):**
