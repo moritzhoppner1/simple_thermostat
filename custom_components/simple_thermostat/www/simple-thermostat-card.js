@@ -446,9 +446,8 @@ class SimpleThermostatCard extends HTMLElement {
     const heatingEntity = this._hass.states[`binary_sensor.${baseName}_heating`];
     const isHeating = heatingEntity ? heatingEntity.state === 'on' : false;
 
-    // Get TRV internal temperature - find dynamically
-    const trvTempPattern = new RegExp(`^sensor\\.${baseName.replace('.', '\\.')}_.*_internal_temp$`);
-    const trvTempSensors = Object.keys(this._hass.states).filter(id => trvTempPattern.test(id));
+    // Get TRV internal temperature
+    const trvTempSensors = this._findSensorsByPattern(baseName, 'internal_temp');
     let trvTemp = null;
 
     if (trvTempSensors.length > 0) {
@@ -738,6 +737,11 @@ class SimpleThermostatCard extends HTMLElement {
     chartSection.appendChild(apexCard);
   }
 
+  _findSensorsByPattern(baseName, suffix) {
+    const pattern = new RegExp(`^sensor\\.${baseName.replace('.', '\\.')}_.*_${suffix}$`);
+    return Object.keys(this._hass.states).filter(id => pattern.test(id));
+  }
+
   _getChartSeries(baseName, tempSensorId) {
     const series = [];
 
@@ -781,13 +785,11 @@ class SimpleThermostatCard extends HTMLElement {
       });
     }
 
-    // TRV internal temp - find all matching sensors
-    const trvTempPattern = new RegExp(`^sensor\\.${baseName.replace('.', '\\.')}_.*_internal_temp$`);
-    const trvTempSensors = Object.keys(this._hass.states).filter(id => trvTempPattern.test(id));
+    // TRV internal temp
+    const trvTempSensors = this._findSensorsByPattern(baseName, 'internal_temp');
     console.log('Found TRV temp sensors:', trvTempSensors);
 
     if (trvTempSensors.length > 0) {
-      // Add the first TRV temp sensor to the chart
       const sensor = trvTempSensors[0];
       console.log('✓ Using TRV temp sensor:', sensor);
       series.push({
@@ -802,13 +804,11 @@ class SimpleThermostatCard extends HTMLElement {
       console.log('✗ No TRV temp sensors found');
     }
 
-    // TRV target temp - find all matching sensors
-    const trvTargetPattern = new RegExp(`^sensor\\.${baseName.replace('.', '\\.')}_.*_target_temp$`);
-    const trvTargetSensors = Object.keys(this._hass.states).filter(id => trvTargetPattern.test(id));
+    // TRV target temp
+    const trvTargetSensors = this._findSensorsByPattern(baseName, 'target_temp');
     console.log('Found TRV target sensors:', trvTargetSensors);
 
     if (trvTargetSensors.length > 0) {
-      // Add the first TRV target sensor to the chart
       const sensor = trvTargetSensors[0];
       console.log('✓ Using TRV target sensor:', sensor);
       series.push({
@@ -824,13 +824,11 @@ class SimpleThermostatCard extends HTMLElement {
       console.log('✗ No TRV target sensors found');
     }
 
-    // Valve position - find all matching sensors
-    const valvePattern = new RegExp(`^sensor\\.${baseName.replace('.', '\\.')}_.*_valve_position$`);
-    const valveSensors = Object.keys(this._hass.states).filter(id => valvePattern.test(id));
+    // Valve position
+    const valveSensors = this._findSensorsByPattern(baseName, 'valve_position');
     console.log('Found valve sensors:', valveSensors);
 
     if (valveSensors.length > 0) {
-      // Add the first valve sensor to the chart
       const sensor = valveSensors[0];
       console.log('✓ Using valve sensor:', sensor);
       series.push({
