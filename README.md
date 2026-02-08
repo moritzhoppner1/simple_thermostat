@@ -467,6 +467,55 @@ See:
 - `configuration.yaml.example` - Full configuration examples
 - `apexcharts-card.yaml.example` - Graph configurations
 
+## Development
+
+### Running Tests
+
+This project includes a comprehensive test suite with 71 tests covering:
+- Climate entity control logic (binary heat/cool/proportional modes)
+- Sensor functionality (valve position, temperature error, heating status)
+- Integration setup and service registration
+- Preset manager scheduling and override logic
+
+**To run all tests:**
+
+```bash
+# From project root
+./venv/bin/python -m pytest custom_components/simple_thermostat/tests/ -v
+```
+
+**To run specific test files:**
+
+```bash
+# Test climate control logic
+./venv/bin/python -m pytest custom_components/simple_thermostat/tests/test_climate.py -v
+
+# Test sensors
+./venv/bin/python -m pytest custom_components/simple_thermostat/tests/test_sensor.py -v
+
+# Test preset manager
+./venv/bin/python -m pytest custom_components/simple_thermostat/tests/test_preset_manager.py -v
+
+# Test integration setup
+./venv/bin/python -m pytest custom_components/simple_thermostat/tests/test_init.py -v
+```
+
+**To run with coverage:**
+
+```bash
+./venv/bin/python -m pytest custom_components/simple_thermostat/tests/ --cov=custom_components/simple_thermostat --cov-report=html
+```
+
+**Test Structure:**
+- `tests/test_climate.py` - Climate entity and control logic tests
+- `tests/test_sensor.py` - Sensor entity tests
+- `tests/test_preset_manager.py` - Preset scheduling and override tests
+- `tests/test_init.py` - Integration setup tests
+- `tests/conftest.py` - Shared test fixtures
+- `pytest.ini` - Pytest configuration
+
+All tests use pytest with pytest-homeassistant-custom-component for mocking Home Assistant components.
+
 ## Contributing
 
 This is a private project for personal use. Feel free to fork and modify for your needs.

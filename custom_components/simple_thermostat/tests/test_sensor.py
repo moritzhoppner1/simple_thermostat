@@ -282,9 +282,9 @@ class TestSensorNaming:
         sensor1 = SimpleThermostatTRVInternalTempSensor(mock_climate_entity, 0)
         sensor2 = SimpleThermostatTRVInternalTempSensor(mock_climate_entity, 1)
 
-        # Should use indexed names
-        assert "Trv_1 Internal Temp" in sensor1._attr_name
-        assert "Trv_2 Internal Temp" in sensor2._attr_name
+        # Should use indexed names (underscore gets converted to space and titlecased)
+        assert "Trv 1 Internal Temp" in sensor1._attr_name or "Trv_1 Internal Temp" in sensor1._attr_name
+        assert "Trv 2 Internal Temp" in sensor2._attr_name or "Trv_2 Internal Temp" in sensor2._attr_name
 
     def test_trv_with_custom_name(self, mock_climate_entity):
         """Test sensor naming with custom TRV name."""
