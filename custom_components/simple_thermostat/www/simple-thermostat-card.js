@@ -376,6 +376,7 @@ class SimpleThermostatCard extends HTMLElement {
           <div class="details-content" id="details-content">
             <div id="status"></div>
             <div id="chart"></div>
+            <div id="schedule-chart"></div>
             <div id="logs"></div>
             <div id="sliders"></div>
           </div>
@@ -431,6 +432,9 @@ class SimpleThermostatCard extends HTMLElement {
 
     // Update chart
     this._updateChart(baseName, entity);
+
+    // Update schedule chart
+    this._updateScheduleChart(entity);
 
     // Update logs
     this._updateLogs(entity);
@@ -868,6 +872,183 @@ class SimpleThermostatCard extends HTMLElement {
     console.log('Series:', series.map(s => s.name));
 
     return series;
+  }
+
+  _updateScheduleChart(entity) {
+    const scheduleChartSection = this.shadowRoot.getElementById('schedule-chart');
+
+    // Get schedule data from entity attributes
+    const scheduleData = entity.attributes.schedule;
+    if (!scheduleData || (!scheduleData.weekday && !scheduleData.weekend)) {
+      scheduleChartSection.innerHTML = `
+        <div style="padding: 16px; margin-top: 16px; border-top: 1px solid var(--divider-color);">
+          <div style="font-weight: 600; margin-bottom: 8px;">Schedule</div>
+          <div style="padding: 12px; color: var(--secondary-text-color); text-align: center; font-style: italic;">
+            No schedule configured
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    // Check if ApexCharts card is available
+    if (!customElements.get('apexcharts-card')) {
+      scheduleChartSection.innerHTML = `
+        <div style="padding: 16px; margin-top: 16px; border-top: 1px solid var(--divider-color);">
+          <div style="font-weight: 600; margin-bottom: 8px;">Schedule</div>
+          <div style="padding: 12px; background: var(--warning-color, #ff9800); color: white; border-radius: 8px; text-align: center;">
+            ⚠️ ApexCharts card not installed. Install via HACS to see the schedule chart.
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    // Transform schedule data into ApexCharts timeline format
+    const series = [];
+    const presetColors = {
+      'present': '#4CAF50',
+      'away': '#2196F3',
+      'cosy': '#FF9800',
+      'off': '#9E9E9E'
+    };
+
+    // Helper function to convert schedule to timeline data
+    const convertScheduleToTimeline = (scheduleArray) => {
+      if (!scheduleArray || scheduleArray.length === 0) return [];
+
+      const timeline = [];
+      const sortedSchedule = [...scheduleArray].sort((a, b) => {
+        const aTime = a.time.split(':');
+        const bTime = b.time.split(':');
+        return (parseInt(aTime[0]) * 60 + parseInt(aTime[1])) - (parseInt(bTime[0]) * 60 + parseInt(bTime[1]));
+      });
+
+      // Create timeline segments
+      for (let i = 0; i < sortedSchedule.length; i++) {
+        const current = sortedSchedule[i];
+        const next = sortedSchedule[i + 1];
+
+        const startTime = current.time.split(':');
+        const startMinutes = parseInt(startTime[0]) * 60 + parseInt(startTime[1]);
+
+        // End time is either the next schedule entry or end of day (24:00)
+        const endMinutes = next
+          ? (() => {
+              const nextTime = next.time.split(':');
+              return parseInt(nextTime[0]) * 60 + parseInt(nextTime[1]);
+            })()
+          : 24 * 60;
+
+        // Convert minutes to milliseconds from start of day
+        const startMs = startMinutes * 60 * 1000;
+        const endMs = endMinutes * 60 * 1000;
+
+        timeline.push({
+          x: current.preset.toUpperCase(),
+          y: [startMs, endMs],
+          fillColor: presetColors[current.preset.toLowerCase()] || '#757575'
+        });
+      }
+
+      return timeline;
+    };
+
+    // Add weekday schedule
+    if (scheduleData.weekday && scheduleData.weekday.length > 0) {
+      series.push({
+        name: 'Weekday',
+        data: convertScheduleToTimeline(scheduleData.weekday)
+      });
+    }
+
+    // Add weekend schedule
+    if (scheduleData.weekend && scheduleData.weekend.length > 0) {
+      series.push({
+        name: 'Weekend',
+        data: convertScheduleToTimeline(scheduleData.weekend)
+      });
+    }
+
+    if (series.length === 0) {
+      scheduleChartSection.innerHTML = '';
+      return;
+    }
+
+    // Create ApexCharts configuration
+    const apexConfig = {
+      type: 'custom:apexcharts-card',
+      header: {
+        show: true,
+        title: 'Schedule',
+        show_states: false
+      },
+      apex_config: {
+        chart: {
+          type: 'rangeBar',
+          height: 150,
+          toolbar: {
+            show: false
+          }
+        },
+        plotOptions: {
+          bar: {
+            horizontal: true,
+            rangeBarGroupRows: true,
+            barHeight: '80%'
+          }
+        },
+        xaxis: {
+          type: 'numeric',
+          min: 0,
+          max: 24 * 60 * 60 * 1000,
+          labels: {
+            formatter: function(value) {
+              const hours = Math.floor(value / (60 * 60 * 1000));
+              return hours + 'h';
+            }
+          },
+          tickAmount: 24
+        },
+        yaxis: {
+          show: true
+        },
+        tooltip: {
+          custom: function({series, seriesIndex, dataPointIndex, w}) {
+            const data = w.config.series[seriesIndex].data[dataPointIndex];
+            const preset = data.x;
+            const startMs = data.y[0];
+            const endMs = data.y[1];
+
+            const startHours = Math.floor(startMs / (60 * 60 * 1000));
+            const startMins = Math.floor((startMs % (60 * 60 * 1000)) / (60 * 1000));
+            const endHours = Math.floor(endMs / (60 * 60 * 1000));
+            const endMins = Math.floor((endMs % (60 * 60 * 1000)) / (60 * 1000));
+
+            const startTime = `${String(startHours).padStart(2, '0')}:${String(startMins).padStart(2, '0')}`;
+            const endTime = `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}`;
+
+            return `<div style="padding: 8px;">
+              <strong>${preset}</strong><br/>
+              ${startTime} - ${endTime}
+            </div>`;
+          }
+        },
+        legend: {
+          show: false
+        }
+      },
+      series: series
+    };
+
+    // Create ApexCharts card element
+    const apexCard = document.createElement('apexcharts-card');
+    apexCard.setConfig(apexConfig);
+    apexCard.hass = this._hass;
+
+    // Clear and add chart
+    scheduleChartSection.innerHTML = '';
+    scheduleChartSection.appendChild(apexCard);
   }
 
   getCardSize() {

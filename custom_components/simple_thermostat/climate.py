@@ -448,6 +448,8 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
             "window_open": override_status["window_open"],
             "outdoor_temp_high": override_status["outdoor_temp_high"],
             "global_away": override_status["global_away"],
+            # Schedule data for visualization
+            "schedule": self._preset_manager._schedule_config if self._preset_manager._schedule_config else None,
         }
 
     def _log_action(self, message):
