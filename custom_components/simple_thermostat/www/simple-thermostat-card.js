@@ -443,6 +443,7 @@ class SimpleThermostatCard extends HTMLElement {
   _updateThermostat(entity) {
     const currentTemp = entity.attributes.current_temperature;
     const targetTemp = entity.attributes.temperature;
+    const tempSensor = entity.attributes.temperature_sensor;
 
     // Extract base name and check heating status
     const entityId = this._config.entity;
@@ -453,11 +454,29 @@ class SimpleThermostatCard extends HTMLElement {
     // Get TRV internal temperature
     const trvTempSensors = this._findSensorsByPattern(baseName, 'internal_temp');
     let trvTemp = null;
+    let trvError = '';
 
     if (trvTempSensors.length > 0) {
       const state = this._hass.states[trvTempSensors[0]];
       if (state && state.state !== 'unavailable') {
         trvTemp = parseFloat(state.state);
+      } else if (!state) {
+        trvError = ` (sensor ${trvTempSensors[0]} not found)`;
+      } else {
+        trvError = ' (unavailable)';
+      }
+    } else {
+      trvError = ' (no TRV sensor found)';
+    }
+
+    // Build error message for missing temperature sensor
+    let tempError = '';
+    if (currentTemp == null && tempSensor) {
+      const sensorState = this._hass.states[tempSensor];
+      if (!sensorState) {
+        tempError = `<div style="color: var(--error-color, #f44336); font-size: 14px; margin-top: 8px;">⚠️ Sensor not found: ${tempSensor}</div>`;
+      } else if (sensorState.state === 'unavailable' || sensorState.state === 'unknown') {
+        tempError = `<div style="color: var(--warning-color, #ff9800); font-size: 14px; margin-top: 8px;">⚠️ Sensor unavailable: ${tempSensor}</div>`;
       }
     }
 
@@ -466,7 +485,8 @@ class SimpleThermostatCard extends HTMLElement {
       <div>
         <div class="temperature-display">${currentTemp != null ? currentTemp.toFixed(1) : '--'}°C</div>
         <div class="target-temp">Target: ${targetTemp != null ? targetTemp.toFixed(1) : '--'}°C ${isHeating ? '🔥' : ''}</div>
-        <div class="trv-temp">TRV: ${trvTemp != null ? trvTemp.toFixed(1) : '--'}°C</div>
+        <div class="trv-temp">TRV: ${trvTemp != null ? trvTemp.toFixed(1) : 'N/A'}°C${trvError}</div>
+        ${tempError}
       </div>
     `;
   }
@@ -740,22 +760,21 @@ class SimpleThermostatCard extends HTMLElement {
 
     // Add warning banner if sensors are missing
     if (missingSensors.length > 0) {
-      const warningHtml = missingSensors.map(sensor => {
+      missingSensors.forEach(sensor => {
+        const warningDiv = document.createElement('div');
+        warningDiv.style.cssText = 'padding: 8px 12px; background: var(--warning-color, #ff9800); color: white; border-radius: 4px; margin-bottom: 8px; font-size: 14px;';
         const displayText = sensor.attribute
           ? `${sensor.entityId} → ${sensor.attribute} attribute`
           : sensor.entityId;
-        return `<div style="padding: 8px 12px; background: var(--warning-color, #ff9800); color: white; border-radius: 4px; margin-bottom: 8px; font-size: 14px;">
-          ⚠️ ${sensor.type}: ${displayText} not found
-        </div>`;
-      }).join('');
-
-      chartSection.innerHTML = warningHtml;
+        warningDiv.textContent = `⚠️ ${sensor.type}: ${displayText} not found`;
+        chartSection.appendChild(warningDiv);
+      });
     }
 
     // Create ApexCharts card element
     const apexCard = document.createElement('apexcharts-card');
-    apexCard.setConfig(apexConfig);
     apexCard.hass = this._hass;
+    apexCard.setConfig(apexConfig);
 
     // Add chart
     chartSection.appendChild(apexCard);

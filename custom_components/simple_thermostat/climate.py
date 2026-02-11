@@ -140,8 +140,8 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     # Support simplified temperature_sensor_id configuration
     temp_sensor_id = config.get(CONF_TEMP_SENSOR_ID)
     if temp_sensor_id:
-        # Auto-construct temperature sensor entity ID
-        temp_sensor = f"sensor.{temp_sensor_id}_temperature"
+        # Auto-construct temperature sensor entity ID (normalize to lowercase)
+        temp_sensor = f"sensor.{temp_sensor_id.lower()}_temperature"
         _LOGGER.info(f"Auto-constructed temperature sensor from temp_sensor_id: {temp_sensor}")
     else:
         # Use explicit temperature_sensor
@@ -276,6 +276,15 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
         self._valve_entities = valve_entities
         self._climate_entities = climate_entities
         self._trv_names = trv_names or []
+
+        # Log configuration for debugging
+        _LOGGER.info(
+            "%s: Initialized with temperature_sensor='%s', valve_entities=%s, climate_entities=%s",
+            self._attr_name,
+            self._temp_sensor,
+            self._valve_entities,
+            self._climate_entities
+        )
         self._away_temp = away_temp
         self._present_temp = present_temp
         self._cosy_temp = cosy_temp
@@ -346,6 +355,24 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
         # Update preset from PresetManager
         self._preset_mode = self._preset_manager.get_active_preset()
         self._update_target_temp_from_preset()
+
+        # Validate temperature sensor exists
+        sensor_state = self.hass.states.get(self._temp_sensor)
+        if sensor_state:
+            _LOGGER.info(
+                "%s: Temperature sensor '%s' found - current state: %s",
+                self.name,
+                self._temp_sensor,
+                sensor_state.state
+            )
+        else:
+            _LOGGER.error(
+                "%s: Temperature sensor '%s' NOT FOUND in Home Assistant! "
+                "Check Developer Tools -> States to find the correct entity ID. "
+                "Expected format: sensor.DEVICE_ID_temperature",
+                self.name,
+                self._temp_sensor
+            )
 
         # Listen to temperature sensor changes
         self._remove_listeners.append(
