@@ -723,7 +723,7 @@ class SimpleThermostatCard extends HTMLElement {
           opposite: true
         }
       ],
-      series: this._getChartSeries(baseName, tempSensorId),
+      series: [],
       apex_config: {
         chart: { height: 300 },
         legend: { show: true, position: 'bottom' },
@@ -731,13 +731,33 @@ class SimpleThermostatCard extends HTMLElement {
       }
     };
 
+    // Get series and missing sensors
+    const { series, missingSensors } = this._getChartSeries(baseName, tempSensorId);
+    apexConfig.series = series;
+
+    // Clear chart section
+    chartSection.innerHTML = '';
+
+    // Add warning banner if sensors are missing
+    if (missingSensors.length > 0) {
+      const warningHtml = missingSensors.map(sensor => {
+        const displayText = sensor.attribute
+          ? `${sensor.entityId} → ${sensor.attribute} attribute`
+          : sensor.entityId;
+        return `<div style="padding: 8px 12px; background: var(--warning-color, #ff9800); color: white; border-radius: 4px; margin-bottom: 8px; font-size: 14px;">
+          ⚠️ ${sensor.type}: ${displayText} not found
+        </div>`;
+      }).join('');
+
+      chartSection.innerHTML = warningHtml;
+    }
+
     // Create ApexCharts card element
     const apexCard = document.createElement('apexcharts-card');
     apexCard.setConfig(apexConfig);
     apexCard.hass = this._hass;
 
-    // Clear and add chart
-    chartSection.innerHTML = '';
+    // Add chart
     chartSection.appendChild(apexCard);
   }
 
@@ -748,6 +768,7 @@ class SimpleThermostatCard extends HTMLElement {
 
   _getChartSeries(baseName, tempSensorId) {
     const series = [];
+    const missingSensors = [];
 
     console.log('Building chart series for baseName:', baseName);
     console.log('Temperature sensor ID:', tempSensorId);
@@ -764,6 +785,11 @@ class SimpleThermostatCard extends HTMLElement {
       });
     } else {
       console.log('✗ Room temp sensor not found:', tempSensorId);
+      missingSensors.push({
+        type: 'Room Temperature',
+        entityId: tempSensorId,
+        attribute: null
+      });
     }
 
     // Target temperature
@@ -806,6 +832,11 @@ class SimpleThermostatCard extends HTMLElement {
       });
     } else {
       console.log('✗ No TRV temp sensors found');
+      missingSensors.push({
+        type: 'TRV Internal Temperature',
+        entityId: `sensor.${baseName}_*_internal_temp`,
+        attribute: null
+      });
     }
 
     // TRV target temp
@@ -826,6 +857,11 @@ class SimpleThermostatCard extends HTMLElement {
       });
     } else {
       console.log('✗ No TRV target sensors found');
+      missingSensors.push({
+        type: 'TRV Target Temperature',
+        entityId: `sensor.${baseName}_*_target_temp`,
+        attribute: null
+      });
     }
 
     // Valve position
@@ -845,6 +881,11 @@ class SimpleThermostatCard extends HTMLElement {
       });
     } else {
       console.log('✗ No valve sensors found');
+      missingSensors.push({
+        type: 'Valve Position',
+        entityId: `sensor.${baseName}_*_valve_position`,
+        attribute: null
+      });
     }
 
     // Heating status - use the overall heating sensor
@@ -866,12 +907,18 @@ class SimpleThermostatCard extends HTMLElement {
       });
     } else {
       console.log('✗ Overall heating sensor not found');
+      missingSensors.push({
+        type: 'Heating Status',
+        entityId: overallHeatingSensor,
+        attribute: null
+      });
     }
 
     console.log('Total series added to chart:', series.length);
     console.log('Series:', series.map(s => s.name));
+    console.log('Missing sensors:', missingSensors);
 
-    return series;
+    return { series, missingSensors };
   }
 
   _updateScheduleChart(entity) {
