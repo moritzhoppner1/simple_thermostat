@@ -457,6 +457,7 @@ class SimpleThermostat(ClimateEntity, RestoreEntity):
         """Return extra state attributes."""
         override_status = self._preset_manager.get_override_status()
         return {
+            "unique_id": self.unique_id,  # For card to find related sensors
             "control_mode": self.control_mode,
             "temperature_sensor": self._temp_sensor,  # For chart to find the room temp sensor
             "temperature_error": round(self._target_temp - self._cur_temp, 2) if self._cur_temp and self._target_temp else None,

@@ -410,7 +410,8 @@ class SimpleThermostatCard extends HTMLElement {
     }
 
     // Extract base name for finding related sensors
-    const baseName = entityId.replace('climate.', '');
+    // Use unique_id if available (sensors are created with unique_id), otherwise fall back to entity_id
+    const baseName = entity.attributes.unique_id || entityId.replace('climate.', '');
 
     // Update title
     const titleSection = this.shadowRoot.getElementById('card-title');
@@ -447,7 +448,8 @@ class SimpleThermostatCard extends HTMLElement {
 
     // Extract base name and check heating status
     const entityId = this._config.entity;
-    const baseName = entityId.replace('climate.', '');
+    // Use unique_id for finding sensors (sensors use unique_id, not entity_id)
+    const baseName = entity.attributes.unique_id || entityId.replace('climate.', '');
     const heatingEntity = this._hass.states[`binary_sensor.${baseName}_heating`];
     const isHeating = heatingEntity ? heatingEntity.state === 'on' : false;
 
