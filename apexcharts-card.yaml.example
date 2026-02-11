@@ -14,6 +14,11 @@ header:
   colorize_states: true
 graph_span: 24h
 hours_12: false
+update_interval: 5m
+update_delay: 2s
+
+experimental:
+  hidden_by_default: true
 
 yaxis:
   - id: temp
@@ -45,6 +50,14 @@ series:
     stroke_width: 3
     yaxis_id: temp
 
+  # Humidity from external sensor
+  - entity: sensor.living_room_temperature
+    attribute: humidity
+    name: Humidity
+    color: "#2196F3"
+    stroke_width: 2
+    yaxis_id: percent
+
   # Target temperature from thermostat
   - entity: climate.living_room
     attribute: temperature
@@ -62,6 +75,8 @@ series:
     stroke_width: 1
     yaxis_id: temp
     opacity: 0.5
+    show:
+      hidden_by_default: true
 
   # Temperature sent to TRV
   - entity: sensor.living_room_trv_1_target_temp
@@ -71,6 +86,8 @@ series:
     curve: stepline
     yaxis_id: temp
     opacity: 0.4
+    show:
+      hidden_by_default: true
 
   # Valve position
   - entity: number.living_room_trv_pi_heating_demand
@@ -90,6 +107,8 @@ series:
     yaxis_id: status
     opacity: 0.2
     transform: "return x === 'on' ? 1 : 0;"
+    show:
+      hidden_by_default: true
 
 apex_config:
   chart:
@@ -112,6 +131,18 @@ apex_config:
           style:
             color: "#fff"
             background: "#775DD0"
+      - y: 75
+        yAxisIndex: 1
+        borderColor: "#FF9800"
+        strokeDashArray: 5
+        opacity: 0.7
+        label:
+          text: "Ventilation Recommended"
+          position: "left"
+          borderColor: "#FF9800"
+          style:
+            color: "#fff"
+            background: "#FF9800"
 
 # ============================================
 # Multiple TRVs Example (Kitchen with 2 TRVs)
@@ -126,6 +157,11 @@ header:
   colorize_states: true
 graph_span: 24h
 hours_12: false
+update_interval: 5m
+update_delay: 2s
+
+experimental:
+  hidden_by_default: true
 
 yaxis:
   - id: temp
@@ -157,6 +193,14 @@ series:
     stroke_width: 3
     yaxis_id: temp
 
+  # Humidity from external sensor
+  - entity: sensor.kitchen_temperature
+    attribute: humidity
+    name: Humidity
+    color: "#2196F3"
+    stroke_width: 2
+    yaxis_id: percent
+
   # Target temperature
   - entity: climate.kitchen
     attribute: temperature
@@ -174,6 +218,8 @@ series:
     stroke_width: 1
     yaxis_id: temp
     opacity: 0.5
+    show:
+      hidden_by_default: true
 
   # TRV 1 - Target temperature
   - entity: sensor.kitchen_trv_1_target_temp
@@ -183,6 +229,8 @@ series:
     curve: stepline
     yaxis_id: temp
     opacity: 0.4
+    show:
+      hidden_by_default: true
 
   # TRV 1 - Valve position
   - entity: number.kitchen_trv_1_pi_heating_demand
@@ -202,6 +250,8 @@ series:
     yaxis_id: status
     opacity: 0.2
     transform: "return x === 'on' ? 1 : 0;"
+    show:
+      hidden_by_default: true
 
   # TRV 2 - Internal temperature
   - entity: sensor.kitchen_trv_2_internal_temp
@@ -210,6 +260,8 @@ series:
     stroke_width: 1
     yaxis_id: temp
     opacity: 0.5
+    show:
+      hidden_by_default: true
 
   # TRV 2 - Target temperature
   - entity: sensor.kitchen_trv_2_target_temp
@@ -219,6 +271,8 @@ series:
     curve: stepline
     yaxis_id: temp
     opacity: 0.4
+    show:
+      hidden_by_default: true
 
   # TRV 2 - Valve position
   - entity: number.kitchen_trv_2_pi_heating_demand
@@ -238,6 +292,8 @@ series:
     yaxis_id: status
     opacity: 0.15
     transform: "return x === 'on' ? 1 : 0;"
+    show:
+      hidden_by_default: true
 
 apex_config:
   chart:
@@ -250,6 +306,20 @@ apex_config:
     shared: true
   grid:
     borderColor: "#333"
+  annotations:
+    yaxis:
+      - y: 75
+        yAxisIndex: 1
+        borderColor: "#FF9800"
+        strokeDashArray: 5
+        opacity: 0.7
+        label:
+          text: "Ventilation Recommended"
+          position: "left"
+          borderColor: "#FF9800"
+          style:
+            color: "#fff"
+            background: "#FF9800"
 
 # ============================================
 # Compact Dashboard Card Example
