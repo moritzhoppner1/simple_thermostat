@@ -19,3 +19,23 @@ views:
             entity: climate.st_fernsehzimmer
           - type: custom:simple-thermostat-card
             entity: climate.st_schlafzimmer
+
+  - title: Standard Thermostate
+    path: standard-thermostats
+    icon: mdi:thermometer
+    cards:
+      - type: thermostat
+        entity: climate.st_kaminzimmer
+        name: Kaminzimmer
+      - type: thermostat
+        entity: climate.st_buro_annie
+        name: Büro Annie
+      - type: thermostat
+        entity: climate.st_kuche
+        name: Küche
+      - type: thermostat
+        entity: climate.st_fernsehzimmer
+        name: Fernsehzimmer
+      - type: thermostat
+        entity: climate.st_schlafzimmer
+        name: Schlafzimmer
