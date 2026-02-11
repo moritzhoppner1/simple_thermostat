@@ -774,12 +774,20 @@ class SimpleThermostatCard extends HTMLElement {
     }
 
     // Create ApexCharts card element
-    const apexCard = document.createElement('apexcharts-card');
-    apexCard.hass = this._hass;
-    apexCard.setConfig(apexConfig);
+    try {
+      const apexCard = document.createElement('apexcharts-card');
+      apexCard.hass = this._hass;
+      apexCard.setConfig(apexConfig);
 
-    // Add chart
-    chartSection.appendChild(apexCard);
+      // Add chart
+      chartSection.appendChild(apexCard);
+    } catch (error) {
+      console.error('Error creating ApexCharts card:', error);
+      const errorDiv = document.createElement('div');
+      errorDiv.style.cssText = 'padding: 12px; background: var(--error-color, #f44336); color: white; border-radius: 8px; text-align: center;';
+      errorDiv.textContent = `⚠️ Error loading chart: ${error.message}`;
+      chartSection.appendChild(errorDiv);
+    }
   }
 
   _findSensorsByPattern(baseName, suffix) {
